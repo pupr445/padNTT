@@ -1,0 +1,61 @@
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
+
+// Rute yang tetap bisa diakses tanpa login.
+const PUBLIC_PATHS = ["/login"];
+
+export async function middleware(request: NextRequest) {
+  let response = NextResponse.next({ request });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+          response = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
+
+  // WAJIB: refresh token sesi kalau perlu, sekaligus mengecek status login.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const isPublic = PUBLIC_PATHS.some((path) => request.nextUrl.pathname.startsWith(path));
+  const isApi = request.nextUrl.pathname.startsWith("/api");
+
+  // Rute /api menangani otorisasinya sendiri (balas 401 JSON) supaya fetch()
+  // dari client tidak malah mengikuti redirect ke halaman HTML /login.
+  if (!user && !isPublic && !isApi) {
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = "/login";
+    loginUrl.searchParams.set("redirectTo", request.nextUrl.pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  if (user && request.nextUrl.pathname === "/login") {
+    const homeUrl = request.nextUrl.clone();
+    homeUrl.pathname = "/";
+    homeUrl.search = "";
+    return NextResponse.redirect(homeUrl);
+  }
+
+  return response;
+}
+
+export const config = {
+  matcher: [
+    // Semua rute KECUALI file statis Next.js & aset publik.
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
+};
