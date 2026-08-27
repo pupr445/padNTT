@@ -1,0 +1,56 @@
+name: Deploy ke Cloudflare Workers
+
+# Auto-deploy setiap ada push/commit ke branch main -- push lewat GitHub web
+# (upload file / commit langsung di browser) sudah cukup, tidak perlu CLI apa pun
+# di sisi Anda. GitHub Actions yang menjalankan build & deploy di server GitHub.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout kode
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build & deploy ke Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+          preCommands: npx opennextjs-cloudflare build
+          # Nilai rahasia ini didorong ke "wrangler secret" Cloudflare (bukan cuma
+          # dipakai saat build) supaya bisa dibaca lewat process.env saat aplikasi
+          # jalan di Workers -- wajib untuk kredensial server-only (bukan NEXT_PUBLIC_*).
+          secrets: |
+            SUPABASE_SERVICE_ROLE_KEY
+            B2_REGION
+            B2_ENDPOINT
+            B2_KEY_ID
+            B2_APPLICATION_KEY
+            B2_BUCKET_NAME
+            B2_PUBLIC_URL
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          B2_REGION: ${{ secrets.B2_REGION }}
+          B2_ENDPOINT: ${{ secrets.B2_ENDPOINT }}
+          B2_KEY_ID: ${{ secrets.B2_KEY_ID }}
+          B2_APPLICATION_KEY: ${{ secrets.B2_APPLICATION_KEY }}
+          B2_BUCKET_NAME: ${{ secrets.B2_BUCKET_NAME }}
+          B2_PUBLIC_URL: ${{ secrets.B2_PUBLIC_URL }}

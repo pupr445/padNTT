@@ -25,7 +25,6 @@ export default function UploadLampiran({ objekPadId }: { objekPadId: string }) {
     try {
       const kategori = detectKategori(file);
 
-      // 1. Minta presigned URL dari API route
       const presignRes = await fetch("/api/upload/presign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -39,7 +38,6 @@ export default function UploadLampiran({ objekPadId }: { objekPadId: string }) {
       if (!presignRes.ok) throw new Error("Gagal membuat URL unggah.");
       const { uploadUrl, key } = await presignRes.json();
 
-      // 2. Upload langsung ke R2
       const putRes = await fetch(uploadUrl, {
         method: "PUT",
         headers: { "Content-Type": file.type },
@@ -47,7 +45,6 @@ export default function UploadLampiran({ objekPadId }: { objekPadId: string }) {
       });
       if (!putRes.ok) throw new Error("Gagal mengunggah file ke penyimpanan.");
 
-      // 3. Simpan metadata ke Supabase
       const { error: insertError } = await supabase.from("lampiran").insert({
         r2_key: key,
         nama_file: file.name,
@@ -67,10 +64,12 @@ export default function UploadLampiran({ objekPadId }: { objekPadId: string }) {
   }
 
   return (
-    <div>
-      <input type="file" onChange={handleFile} disabled={uploading} accept="image/*,video/*,.pdf,.doc,.docx" />
-      {uploading && <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: "6px 0 0" }}>Mengunggah...</p>}
-      {error && <p style={{ fontSize: 12, color: "var(--danger)", margin: "6px 0 0" }}>{error}</p>}
+    <div className="upload-drop">
+      <label htmlFor="lampiran-input" className="btn">
+        {uploading ? "Mengunggah..." : "+ Unggah lampiran"}
+      </label>
+      <input id="lampiran-input" type="file" onChange={handleFile} disabled={uploading} accept="image/*,video/*,.pdf,.doc,.docx" style={{ display: "none" }} />
+      {error && <p className="error-text" style={{ marginTop: 8 }}>{error}</p>}
     </div>
   );
 }

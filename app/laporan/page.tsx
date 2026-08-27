@@ -1,5 +1,6 @@
 import { createServerSupabase } from "@/lib/supabase/server";
 import LaporanForm from "./form";
+import { rupiah } from "@/lib/status";
 
 export const revalidate = 0;
 
@@ -11,26 +12,23 @@ async function getData() {
   return { laporan: laporan ?? [], jenisPad: jenisPad ?? [], targetRealisasi: targetRealisasi ?? [] };
 }
 
-function rupiah(n: number) {
-  return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n);
-}
-
 export default async function LaporanPage() {
   const { laporan, jenisPad, targetRealisasi } = await getData();
 
   return (
     <div>
-      <h1 style={{ fontSize: 20, fontWeight: 600, margin: "0 0 4px" }}>Laporan berkala</h1>
-      <p style={{ color: "var(--text-secondary)", fontSize: 14, margin: "0 0 1.5rem" }}>
-        Laporan Pokja III kepada Ketua Tim / Gubernur, mencakup capaian PAD dan rekomendasi kebijakan
+      <p className="page-eyebrow">Pokja III &middot; Monitoring & evaluasi</p>
+      <h1 className="page-title">Laporan berkala</h1>
+      <p className="page-subtitle">
+        Laporan kepada Ketua Tim / Gubernur, mencakup capaian PAD, kendala, dan rekomendasi kebijakan.
       </p>
 
-      <div className="card" style={{ marginBottom: "1.5rem" }}>
-        <p style={{ fontSize: 14, fontWeight: 600, margin: "0 0 12px" }}>Ringkasan capaian saat ini (otomatis)</p>
-        <table style={{ width: "100%", fontSize: 13, borderCollapse: "collapse" }}>
+      <div className="card" style={{ marginBottom: 22 }}>
+        <p className="section-label">Ringkasan capaian saat ini (otomatis)</p>
+        <table>
           <thead>
-            <tr style={{ textAlign: "left", color: "var(--text-secondary)" }}>
-              <th style={{ padding: "4px 0" }}>Jenis PAD</th>
+            <tr>
+              <th>Jenis PAD</th>
               <th>Target</th>
               <th>Realisasi</th>
               <th>%</th>
@@ -43,33 +41,34 @@ export default async function LaporanPage() {
               const realisasi = rows.reduce((s, r) => s + Number(r.realisasi_rp), 0);
               const persen = target > 0 ? Math.round((realisasi / target) * 100) : 0;
               return (
-                <tr key={jp.id} style={{ borderTop: "1px solid var(--border)" }}>
-                  <td style={{ padding: "6px 0" }}>{jp.nama}</td>
-                  <td>{rupiah(target)}</td>
-                  <td>{rupiah(realisasi)}</td>
-                  <td>{persen}%</td>
+                <tr key={jp.id}>
+                  <td>{jp.nama}</td>
+                  <td className="mono">{rupiah(target)}</td>
+                  <td className="mono">{rupiah(realisasi)}</td>
+                  <td className="mono">{persen}%</td>
                 </tr>
               );
             })}
           </tbody>
         </table>
+        {jenisPad.length === 0 && <div className="empty-state">Belum ada data jenis PAD.</div>}
       </div>
 
-      <div style={{ marginBottom: "1.5rem" }}>
+      <div style={{ marginBottom: 22 }}>
         <LaporanForm />
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div className="stack">
         {laporan.map((l) => (
           <div key={l.id} className="card">
-            <p style={{ fontSize: 13, fontWeight: 500, margin: 0 }}>{l.judul}</p>
-            <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: "4px 0" }}>{l.ringkasan}</p>
-            <p style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>
-              Periode {l.periode} · Pokja {l.pokja ?? "-"} · {new Date(l.created_at).toLocaleDateString("id-ID")}
+            <p style={{ fontSize: 13.5, fontWeight: 600, margin: 0 }}>{l.judul}</p>
+            <p style={{ fontSize: 12.5, color: "var(--text-secondary)", margin: "6px 0" }}>{l.ringkasan}</p>
+            <p className="mono" style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>
+              Periode {l.periode} &middot; Pokja {l.pokja ?? "-"} &middot; {new Date(l.created_at).toLocaleDateString("id-ID")}
             </p>
           </div>
         ))}
-        {laporan.length === 0 && <p style={{ fontSize: 13, color: "var(--text-muted)" }}>Belum ada laporan tersimpan.</p>}
+        {laporan.length === 0 && <div className="empty-state">Belum ada laporan tersimpan.</div>}
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createServerSupabase } from "@/lib/supabase/server";
 import ObjekPadForm from "./form";
+import { statusMeta } from "@/lib/status";
 
 export const revalidate = 0;
 
@@ -14,54 +15,45 @@ async function getData() {
   return { jenisPad: jenisPad ?? [], objekPad: objekPad ?? [] };
 }
 
-function statusBadge(status: string) {
-  const map: Record<string, { bg: string; text: string; label: string }> = {
-    terdaftar: { bg: "var(--success-bg)", text: "var(--success)", label: "Terdaftar" },
-    proses_verifikasi: { bg: "var(--warning-bg)", text: "var(--warning)", label: "Verifikasi" },
-    menunggak: { bg: "var(--danger-bg)", text: "var(--danger)", label: "Menunggak" },
-    belum_terdaftar: { bg: "var(--surface-0)", text: "var(--text-secondary)", label: "Belum terdaftar" },
-  };
-  const s = map[status] ?? map.belum_terdaftar;
-  return (
-    <span className="badge" style={{ background: s.bg, color: s.text }}>
-      {s.label}
-    </span>
-  );
-}
-
 export default async function ObjekPadPage() {
   const { jenisPad, objekPad } = await getData();
 
   return (
     <div>
-      <h1 style={{ fontSize: 20, fontWeight: 600, margin: "0 0 4px" }}>Objek PAD</h1>
-      <p style={{ color: "var(--text-secondary)", fontSize: 14, margin: "0 0 1.5rem" }}>
-        Inventarisasi, identifikasi, dan validasi objek retribusi/pajak — tugas Pokja I
+      <p className="page-eyebrow">Pokja I &middot; Inventarisasi</p>
+      <h1 className="page-title">Objek PAD</h1>
+      <p className="page-subtitle">
+        Inventarisasi, identifikasi, dan validasi objek retribusi utilitas jalan, alat berat,
+        dan pajak air permukaan.
       </p>
 
-      <div style={{ marginBottom: "1.5rem" }}>
+      <div style={{ marginBottom: 24 }}>
         <ObjekPadForm jenisPad={jenisPad} />
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {objekPad.map((o: any) => (
-          <Link
-            key={o.id}
-            href={`/objek-pad/${o.id}`}
-            className="card"
-            style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
-          >
-            <div>
-              <p style={{ fontSize: 14, fontWeight: 500, margin: 0 }}>{o.nama_objek}</p>
-              <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: "2px 0 0" }}>
-                {o.jenis_pad?.nama} · {o.kabupaten_kota ?? "-"}
-              </p>
-            </div>
-            {statusBadge(o.status_verifikasi)}
-          </Link>
-        ))}
+      <div className="stack">
+        {objekPad.map((o: any) => {
+          const meta = statusMeta(o.status_verifikasi);
+          return (
+            <Link key={o.id} href={`/objek-pad/${o.id}`} className="card card-link" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <span className="status-dot" style={{ background: meta.color, width: 10, height: 10 }} />
+                <div>
+                  <p style={{ fontSize: 14, fontWeight: 500, margin: 0 }}>{o.nama_objek}</p>
+                  <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: "2px 0 0" }}>
+                    {o.jenis_pad?.nama} &middot; {o.kabupaten_kota ?? "-"}
+                    {o.koordinat_lat && o.koordinat_lng ? (
+                      <span className="mono"> &middot; {Number(o.koordinat_lat).toFixed(4)}, {Number(o.koordinat_lng).toFixed(4)}</span>
+                    ) : null}
+                  </p>
+                </div>
+              </div>
+              <span className="badge" style={{ background: meta.tint, color: meta.color }}>{meta.label}</span>
+            </Link>
+          );
+        })}
         {objekPad.length === 0 && (
-          <p style={{ fontSize: 13, color: "var(--text-muted)" }}>Belum ada objek PAD. Tambahkan lewat form di atas.</p>
+          <div className="empty-state">Belum ada objek PAD. Tambahkan lewat form di atas.</div>
         )}
       </div>
     </div>

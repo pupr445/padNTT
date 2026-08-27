@@ -44,56 +44,111 @@ function LoginForm() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "var(--surface-0)",
-      }}
-    >
-      <form onSubmit={handleSubmit} className="card" style={{ width: 360, display: "flex", flexDirection: "column", gap: 14 }}>
-        <div style={{ marginBottom: 4 }}>
-          <p style={{ fontWeight: 600, fontSize: 17, margin: 0 }}>Optimalisasi PAD</p>
-          <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "2px 0 0" }}>
-            Tim Terpadu — Dinas PUPR Provinsi NTT
+    <div className="login-shell">
+      <div className="login-side">
+        <div className="login-brand">
+          <div className="brand-mark" style={{ width: 40, height: 40 }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 21s-7-6.3-7-11.5A7 7 0 0 1 19 9.5C19 14.7 12 21 12 21Z" />
+              <circle cx="12" cy="9.5" r="2.2" />
+            </svg>
+          </div>
+          <div>
+            <div className="brand-name" style={{ fontSize: 19 }}>OPTIMA PAD NTT</div>
+            <div className="brand-tag">SK Gubernur 272/KEP/HK/2026</div>
+          </div>
+        </div>
+        <p className="login-slogan">"Dari data lapangan menjadi pendapatan daerah."</p>
+        <ul className="login-points">
+          <li>Inventarisasi & validasi objek PAD lintas kabupaten/kota</li>
+          <li>Peta potensi real-time untuk Pokja I, II, dan III</li>
+          <li>Audit trail penuh atas setiap perubahan data</li>
+        </ul>
+      </div>
+
+      <div className="login-form-wrap">
+        <form onSubmit={handleSubmit} className="card login-card">
+          <div style={{ marginBottom: 4 }}>
+            <p style={{ fontWeight: 700, fontSize: 17, margin: 0, fontFamily: "var(--font-display)" }}>Masuk ke akun Anda</p>
+            <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "4px 0 0" }}>
+              Tim Terpadu Optimalisasi PAD, Dinas PUPR Provinsi NTT
+            </p>
+          </div>
+
+          <div className="field">
+            <label>Email</label>
+            <input
+              type="email"
+              required
+              autoFocus
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="nama@ntt.go.id"
+            />
+          </div>
+
+          <div className="field">
+            <label>Kata sandi</label>
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="********"
+            />
+          </div>
+
+          {error && <p className="error-text">{error}</p>}
+
+          <button type="submit" className="btn btn-primary" disabled={loading} style={{ justifyContent: "center", padding: "10px 14px" }}>
+            {loading ? "Memeriksa..." : "Masuk"}
+          </button>
+
+          <p style={{ fontSize: 12, color: "var(--text-muted)", margin: 0 }}>
+            Akun dibuat oleh Super Admin. Hubungi Sekretariat Tim jika belum punya akses.
           </p>
-        </div>
+        </form>
+      </div>
 
-        <div>
-          <label>Email</label>
-          <input
-            type="email"
-            required
-            autoFocus
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="nama@ntt.go.id"
-          />
-        </div>
-
-        <div>
-          <label>Kata sandi</label>
-          <input
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-          />
-        </div>
-
-        {error && <p style={{ fontSize: 13, color: "var(--danger)", margin: 0 }}>{error}</p>}
-
-        <button type="submit" className="btn btn-primary" disabled={loading} style={{ marginTop: 4 }}>
-          {loading ? "Masuk..." : "Masuk"}
-        </button>
-
-        <p style={{ fontSize: 12, color: "var(--text-muted)", margin: 0 }}>
-          Akun dibuat oleh Super Admin. Hubungi Sekretariat Tim jika belum punya akses.
-        </p>
-      </form>
+      <style>{`
+        .login-shell {
+          min-height: 100vh;
+          display: grid;
+          grid-template-columns: 1.1fr 1fr;
+        }
+        .login-side {
+          background: var(--ink);
+          color: white;
+          padding: 56px;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          gap: 22px;
+        }
+        .login-brand { display: flex; align-items: center; gap: 14px; }
+        .login-slogan {
+          font-family: var(--font-display);
+          font-size: 28px;
+          font-weight: 600;
+          line-height: 1.3;
+          max-width: 420px;
+          color: #fff;
+          margin: 0;
+        }
+        .login-points { color: var(--text-on-ink-muted); font-size: 13.5px; line-height: 2; padding-left: 18px; margin: 0; }
+        .login-form-wrap {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: var(--paper);
+          padding: 24px;
+        }
+        .login-card { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 16px; }
+        @media (max-width: 860px) {
+          .login-shell { grid-template-columns: 1fr; }
+          .login-side { display: none; }
+        }
+      `}</style>
     </div>
   );
 }

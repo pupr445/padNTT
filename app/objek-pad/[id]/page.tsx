@@ -1,7 +1,10 @@
+import Link from "next/link";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { getDownloadUrl } from "@/lib/storage";
 import UploadLampiran from "./upload";
 import TambahTindakLanjut from "./tindak-lanjut-form";
+import { statusMeta } from "@/lib/status";
+import { IconMapPin, IconFileText } from "@/lib/icons";
 
 export const revalidate = 0;
 
@@ -36,41 +39,52 @@ export default async function ObjekDetailPage({ params }: { params: Promise<{ id
   const { objek, tindakLanjut, lampiran } = await getData(id);
 
   if (!objek) {
-    return <p>Objek tidak ditemukan.</p>;
+    return <div className="empty-state">Objek tidak ditemukan.</div>;
   }
+
+  const meta = statusMeta(objek.status_verifikasi);
+  const hasCoords = objek.koordinat_lat && objek.koordinat_lng;
 
   return (
     <div>
-      <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: "0 0 4px" }}>
-        {objek.jenis_pad?.nama}
-      </p>
-      <h1 style={{ fontSize: 20, fontWeight: 600, margin: "0 0 4px" }}>{objek.nama_objek}</h1>
-      <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "0 0 1.5rem" }}>
-        {objek.kabupaten_kota ?? "-"} {objek.lokasi ? `· ${objek.lokasi}` : ""}
+      <p className="page-eyebrow">{objek.jenis_pad?.nama}</p>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
+        <h1 className="page-title" style={{ margin: 0 }}>{objek.nama_objek}</h1>
+        <span className="badge" style={{ background: meta.tint, color: meta.color }}>{meta.label}</span>
+      </div>
+      <p className="page-subtitle" style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+        <span>{objek.kabupaten_kota ?? "-"} {objek.lokasi ? `\u00b7 ${objek.lokasi}` : ""}</span>
+        {hasCoords && (
+          <Link href={`/peta?focus=${objek.id}`} className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12.5 }}>
+            <IconMapPin size={13} /> {Number(objek.koordinat_lat).toFixed(5)}, {Number(objek.koordinat_lng).toFixed(5)}
+          </Link>
+        )}
       </p>
 
-      <div className="card" style={{ marginBottom: "1.5rem" }}>
-        <p style={{ fontSize: 14, fontWeight: 600, margin: "0 0 12px" }}>Lampiran (foto / video / dokumen)</p>
+      <div className="card" style={{ marginBottom: 20 }}>
+        <p className="section-label">
+          <span style={{ display: "flex", alignItems: "center", gap: 6 }}><IconFileText size={15} /> Lampiran (foto / video / dokumen)</span>
+        </p>
         <UploadLampiran objekPadId={objek.id} />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 10, marginTop: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: 10, marginTop: 14 }}>
           {lampiran.map((l) => (
-            <a key={l.id} href={l.downloadUrl} target="_blank" rel="noreferrer" className="card" style={{ padding: 8, textAlign: "center" }}>
-              <p style={{ fontSize: 11, margin: 0, wordBreak: "break-word" }}>{l.nama_file}</p>
+            <a key={l.id} href={l.downloadUrl} target="_blank" rel="noreferrer" className="card card-link" style={{ padding: 10, textAlign: "center" }}>
+              <p style={{ fontSize: 11.5, margin: 0, wordBreak: "break-word" }}>{l.nama_file}</p>
             </a>
           ))}
-          {lampiran.length === 0 && <p style={{ fontSize: 13, color: "var(--text-muted)" }}>Belum ada lampiran.</p>}
+          {lampiran.length === 0 && <p style={{ fontSize: 13, color: "var(--text-muted)", gridColumn: "1 / -1" }}>Belum ada lampiran.</p>}
         </div>
       </div>
 
       <div className="card">
-        <p style={{ fontSize: 14, fontWeight: 600, margin: "0 0 12px" }}>Tindak lanjut</p>
+        <p className="section-label">Tindak lanjut</p>
         <TambahTindakLanjut objekPadId={objek.id} />
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
+        <div className="stack" style={{ marginTop: 14 }}>
           {tindakLanjut.map((t) => (
-            <div key={t.id} style={{ borderTop: "1px solid var(--border)", paddingTop: 8 }}>
-              <p style={{ fontSize: 13, margin: 0 }}>{t.deskripsi ?? t.jenis_kegiatan}</p>
-              <p style={{ fontSize: 11, color: "var(--text-muted)", margin: "4px 0 0" }}>
-                {t.jenis_kegiatan} · Pokja {t.pokja ?? "-"} · {new Date(t.tanggal_kegiatan).toLocaleDateString("id-ID")}
+            <div key={t.id} style={{ borderTop: "1px solid var(--line)", paddingTop: 10 }}>
+              <p style={{ fontSize: 13.5, margin: 0 }}>{t.deskripsi ?? t.jenis_kegiatan}</p>
+              <p className="mono" style={{ fontSize: 11, color: "var(--text-muted)", margin: "6px 0 0" }}>
+                {t.jenis_kegiatan} &middot; Pokja {t.pokja ?? "-"} &middot; {new Date(t.tanggal_kegiatan).toLocaleDateString("id-ID")}
               </p>
             </div>
           ))}

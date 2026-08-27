@@ -1,21 +1,14 @@
 import "./globals.css";
-import Link from "next/link";
 import { getCurrentProfile } from "@/lib/auth";
 import { ROLE_LABEL } from "@/lib/types";
 import { signOutAction } from "@/lib/actions/auth";
+import { IconLogout } from "@/lib/icons";
+import SidebarNav from "./nav-links";
 
 export const metadata = {
-  title: "Optimalisasi PAD — Dinas PUPR NTT",
-  description: "Aplikasi Tim Terpadu Optimalisasi Pendapatan Asli Daerah, Dinas PUPR Provinsi NTT",
+  title: "OPTIMA PAD NTT",
+  description: "Sistem Optimalisasi Pendapatan Asli Daerah -- Tim Terpadu, Dinas PUPR Provinsi NTT",
 };
-
-const navItems = [
-  { href: "/", label: "Dashboard" },
-  { href: "/objek-pad", label: "Objek PAD" },
-  { href: "/tindak-lanjut", label: "Tindak lanjut" },
-  { href: "/laporan", label: "Laporan" },
-  { href: "/tim", label: "Struktur tim" },
-];
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const profile = await getCurrentProfile();
@@ -24,58 +17,46 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="id">
       <body>
         {!profile ? (
-          // Halaman /login tidak pakai sidebar — middleware sudah mengarahkan
+          // Halaman /login tidak pakai sidebar -- middleware sudah mengarahkan
           // pengguna belum login ke sini, jadi cukup render children apa adanya.
           children
         ) : (
-          <div style={{ display: "flex", minHeight: "100vh" }}>
-            <aside
-              style={{
-                width: 220,
-                borderRight: "1px solid var(--border)",
-                padding: "1.25rem 1rem",
-                flexShrink: 0,
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              <div style={{ marginBottom: "1.5rem" }}>
-                <p style={{ fontWeight: 600, fontSize: 15, margin: 0 }}>Optimalisasi PAD</p>
-                <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: "2px 0 0" }}>
-                  Dinas PUPR — NTT
-                </p>
+          <div className="app-shell">
+            <aside className="sidebar">
+              <div className="brand">
+                <div className="brand-mark">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 21s-7-6.3-7-11.5A7 7 0 0 1 19 9.5C19 14.7 12 21 12 21Z" />
+                    <circle cx="12" cy="9.5" r="2.2" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="brand-name">OPTIMA PAD</div>
+                  <div className="brand-tag">NTT &middot; SK 272/2026</div>
+                </div>
               </div>
-              <nav style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
-                {navItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    style={{
-                      color: "var(--text-primary)",
-                      fontSize: 14,
-                      padding: "8px 10px",
-                      borderRadius: 8,
-                    }}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </nav>
 
-              <div style={{ borderTop: "1px solid var(--border)", paddingTop: 12, marginTop: 12 }}>
-                <p style={{ fontSize: 13, fontWeight: 500, margin: 0 }}>{profile.nama_lengkap}</p>
-                <p style={{ fontSize: 11, color: "var(--text-secondary)", margin: "2px 0 8px" }}>
-                  {ROLE_LABEL[profile.role]}
-                  {profile.pokja ? ` · Pokja ${profile.pokja}` : ""}
-                </p>
-                <form action={signOutAction}>
-                  <button type="submit" className="btn" style={{ width: "100%", fontSize: 13 }}>
-                    Keluar
-                  </button>
-                </form>
+              <SidebarNav />
+
+              <div className="sidebar-footer">
+                <div className="user-card">
+                  <div>
+                    <p className="user-name">{profile.nama_lengkap}</p>
+                    <p className="user-role">
+                      {ROLE_LABEL[profile.role]}
+                      {profile.pokja ? ` \u00b7 Pokja ${profile.pokja}` : ""}
+                    </p>
+                  </div>
+                  <form action={signOutAction}>
+                    <button type="submit" className="btn btn-ghost" style={{ width: "100%", justifyContent: "flex-start", color: "var(--text-on-ink-muted)" }}>
+                      <IconLogout size={14} />
+                      Keluar
+                    </button>
+                  </form>
+                </div>
               </div>
             </aside>
-            <main style={{ flex: 1, padding: "1.5rem 2rem", maxWidth: 1100 }}>{children}</main>
+            <main className="main">{children}</main>
           </div>
         )}
       </body>

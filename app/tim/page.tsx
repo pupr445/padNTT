@@ -20,32 +20,33 @@ export default async function TimPage() {
 
   return (
     <div>
-      <h1 style={{ fontSize: 20, fontWeight: 600, margin: "0 0 4px" }}>Struktur tim</h1>
-      <p style={{ color: "var(--text-secondary)", fontSize: 14, margin: "0 0 1.5rem" }}>
-        Tim Terpadu Optimalisasi PAD — SK Gubernur NTT No. 272/KEP/HK/2026
+      <p className="page-eyebrow">SK Gubernur NTT No. 272/KEP/HK/2026</p>
+      <h1 className="page-title">Struktur tim terpadu</h1>
+      <p className="page-subtitle">
+        Susunan Tim Terpadu Optimalisasi Pendapatan Asli Daerah pada Dinas PUPR Provinsi NTT.
       </p>
 
       {Object.keys(kelompok).length === 0 && (
-        <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
+        <div className="empty-state">
           Belum ada data. Impor data lampiran SK ke tabel <code>tim_struktur</code> lewat Supabase.
-        </p>
+        </div>
       )}
 
-      {Object.entries(kelompok).map(([nama, list]) => (
-        <div key={nama} style={{ marginBottom: "1.5rem" }}>
-          <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-secondary)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: 0.4 }}>
-            {nama}
-          </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            {list.map((a) => (
-              <div key={a.id} className="card" style={{ padding: "10px 14px" }}>
-                <p style={{ fontSize: 13, fontWeight: 500, margin: 0 }}>{a.nama_jabatan}</p>
-                <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: "2px 0 0" }}>{a.kedudukan}</p>
-              </div>
-            ))}
+      <div className="grid-cards" style={{ alignItems: "start" }}>
+        {Object.entries(kelompok).map(([nama, list]) => (
+          <div key={nama} className="card">
+            <p className="nav-group-label" style={{ color: "var(--marine-dark)", padding: "0 0 10px" }}>{nama}</p>
+            <div className="stack" style={{ gap: 8 }}>
+              {list.map((a) => (
+                <div key={a.id} style={{ borderTop: "1px solid var(--line)", paddingTop: 8 }}>
+                  <p style={{ fontSize: 13, fontWeight: 500, margin: 0 }}>{a.nama_jabatan}</p>
+                  <p style={{ fontSize: 11.5, color: "var(--text-secondary)", margin: "2px 0 0" }}>{a.kedudukan}</p>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }

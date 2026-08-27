@@ -56,9 +56,9 @@ export default function TambahTindakLanjut({ objekPadId }: { objekPadId: string 
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-        <div>
+    <form onSubmit={handleSubmit} className="stack">
+      <div className="form-grid-2">
+        <div className="field">
           <label>Jenis kegiatan</label>
           <select value={form.jenis_kegiatan} onChange={(e) => setForm({ ...form, jenis_kegiatan: e.target.value })}>
             {jenisOptions.map((o) => (
@@ -66,7 +66,7 @@ export default function TambahTindakLanjut({ objekPadId }: { objekPadId: string 
             ))}
           </select>
         </div>
-        <div>
+        <div className="field">
           <label>Pokja</label>
           <select value={form.pokja} onChange={(e) => setForm({ ...form, pokja: e.target.value })}>
             <option value="I">Pokja I</option>
@@ -75,7 +75,7 @@ export default function TambahTindakLanjut({ objekPadId }: { objekPadId: string 
           </select>
         </div>
       </div>
-      <div>
+      <div className="field">
         <label>Deskripsi</label>
         <textarea
           rows={2}
@@ -84,11 +84,11 @@ export default function TambahTindakLanjut({ objekPadId }: { objekPadId: string 
           placeholder="Contoh: Survei lapangan dan verifikasi objek utilitas jalan"
         />
       </div>
-      <div>
+      <div className="field">
         <label>Penanggung jawab (PIC)</label>
         <input value={form.pic} onChange={(e) => setForm({ ...form, pic: e.target.value })} placeholder="Nama petugas" />
       </div>
-      {error && <p style={{ fontSize: 13, color: "var(--danger)", margin: 0 }}>{error}</p>}
+      {error && <p className="error-text">{error}</p>}
       <div style={{ display: "flex", gap: 8 }}>
         <button type="submit" className="btn btn-primary" disabled={saving}>
           {saving ? "Menyimpan..." : "Simpan"}

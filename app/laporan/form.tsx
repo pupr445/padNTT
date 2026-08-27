@@ -46,23 +46,23 @@ export default function LaporanForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="card" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 10 }}>
-        <div>
+    <form onSubmit={handleSubmit} className="card stack">
+      <div className="form-grid-2">
+        <div className="field">
           <label>Judul laporan</label>
           <input value={form.judul} onChange={(e) => setForm({ ...form, judul: e.target.value })} placeholder="Laporan Triwulan III 2026" />
         </div>
-        <div>
+        <div className="field">
           <label>Periode</label>
           <input value={form.periode} onChange={(e) => setForm({ ...form, periode: e.target.value })} placeholder="2026-Q3" />
         </div>
       </div>
-      <div>
+      <div className="field">
         <label>Ringkasan</label>
         <textarea rows={3} value={form.ringkasan} onChange={(e) => setForm({ ...form, ringkasan: e.target.value })} placeholder="Capaian, kendala, dan rekomendasi kebijakan" />
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-        <div>
+      <div className="form-grid-2">
+        <div className="field">
           <label>Pokja</label>
           <select value={form.pokja} onChange={(e) => setForm({ ...form, pokja: e.target.value })}>
             <option value="I">Pokja I</option>
@@ -70,12 +70,12 @@ export default function LaporanForm() {
             <option value="III">Pokja III</option>
           </select>
         </div>
-        <div>
+        <div className="field">
           <label>Dibuat oleh</label>
           <input value={form.dibuat_oleh} onChange={(e) => setForm({ ...form, dibuat_oleh: e.target.value })} placeholder="Nama" />
         </div>
       </div>
-      {error && <p style={{ fontSize: 13, color: "var(--danger)", margin: 0 }}>{error}</p>}
+      {error && <p className="error-text">{error}</p>}
       <div style={{ display: "flex", gap: 8 }}>
         <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? "Menyimpan..." : "Simpan"}</button>
         <button type="button" className="btn" onClick={() => setOpen(false)}>Batal</button>

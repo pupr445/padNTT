@@ -27,35 +27,45 @@ export default async function TindakLanjutPage() {
 
   return (
     <div>
-      <h1 style={{ fontSize: 20, fontWeight: 600, margin: "0 0 4px" }}>Tindak lanjut</h1>
-      <p style={{ color: "var(--text-secondary)", fontSize: 14, margin: "0 0 1.5rem" }}>
-        Riwayat kegiatan Pokja II: penertiban, sosialisasi, penagihan, pendampingan hukum
+      <p className="page-eyebrow">Pokja II &middot; Intervensi</p>
+      <h1 className="page-title">Tindak lanjut</h1>
+      <p className="page-subtitle">
+        Riwayat kegiatan penertiban, sosialisasi, penagihan, dan pendampingan hukum lintas instansi.
       </p>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div className="timeline">
         {items.map((t: any) => (
-          <div key={t.id} className="card">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-              <div>
-                <p style={{ fontSize: 13, fontWeight: 500, margin: 0 }}>{jenisLabel[t.jenis_kegiatan] ?? t.jenis_kegiatan}</p>
-                <p style={{ fontSize: 13, margin: "4px 0 0" }}>{t.deskripsi}</p>
-                {t.objek_pad && (
-                  <Link href={`/objek-pad/${t.objek_pad_id}`} style={{ fontSize: 12 }}>
-                    {t.objek_pad.nama_objek}
-                  </Link>
-                )}
+          <div key={t.id} className="timeline-row">
+            <div className="timeline-dot" />
+            <div className="card" style={{ flex: 1 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+                <div>
+                  <p style={{ fontSize: 13.5, fontWeight: 600, margin: 0 }}>{jenisLabel[t.jenis_kegiatan] ?? t.jenis_kegiatan}</p>
+                  <p style={{ fontSize: 13.5, margin: "6px 0 0" }}>{t.deskripsi}</p>
+                  {t.objek_pad && (
+                    <Link href={`/objek-pad/${t.objek_pad_id}`} style={{ fontSize: 12, fontWeight: 500 }}>
+                      {t.objek_pad.nama_objek}
+                    </Link>
+                  )}
+                </div>
+                <span className="badge" style={{ background: "var(--marine-tint)", color: "var(--marine-dark)" }}>
+                  Pokja {t.pokja ?? "-"}
+                </span>
               </div>
-              <span className="badge" style={{ background: "var(--accent-bg)", color: "var(--accent)" }}>
-                Pokja {t.pokja ?? "-"}
-              </span>
+              <p className="mono" style={{ fontSize: 11, color: "var(--text-muted)", margin: "10px 0 0" }}>
+                {t.pic ?? "-"} &middot; {new Date(t.tanggal_kegiatan).toLocaleDateString("id-ID")}
+              </p>
             </div>
-            <p style={{ fontSize: 11, color: "var(--text-muted)", margin: "8px 0 0" }}>
-              {t.pic ?? "-"} · {new Date(t.tanggal_kegiatan).toLocaleDateString("id-ID")}
-            </p>
           </div>
         ))}
-        {items.length === 0 && <p style={{ fontSize: 13, color: "var(--text-muted)" }}>Belum ada catatan tindak lanjut.</p>}
+        {items.length === 0 && <div className="empty-state">Belum ada catatan tindak lanjut.</div>}
       </div>
+
+      <style>{`
+        .timeline { position: relative; display: flex; flex-direction: column; gap: 16px; }
+        .timeline-row { display: flex; gap: 14px; align-items: flex-start; }
+        .timeline-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--marine); margin-top: 20px; flex-shrink: 0; }
+      `}</style>
     </div>
   );
 }
