@@ -7,7 +7,7 @@ export const revalidate = 0;
 async function getDashboardData() {
   const db = await createServerSupabase();
 
-  const { data: jenisPad } = await db.from("jenis_pad").select("*");
+  const { data: jenisPad, error: jenisPadError } = await db.from("jenis_pad").select("*");
   const { data: targetRealisasi } = await db.from("target_realisasi").select("*");
   const { data: objekPadAll } = await db.from("objek_pad").select("id, nama_objek, kabupaten_kota, status_verifikasi, created_at");
   const { data: objekPadRecent } = await db
@@ -27,11 +27,12 @@ async function getDashboardData() {
     objekPadAll: objekPadAll ?? [],
     objekPadRecent: objekPadRecent ?? [],
     tindakLanjut: tindakLanjut ?? [],
+    error: jenisPadError?.message ?? null,
   };
 }
 
 export default async function DashboardPage() {
-  const { jenisPad, targetRealisasi, objekPadAll, objekPadRecent, tindakLanjut } = await getDashboardData();
+  const { jenisPad, targetRealisasi, objekPadAll, objekPadRecent, tindakLanjut, error } = await getDashboardData();
 
   const totalTarget = targetRealisasi.reduce((sum, r) => sum + Number(r.target_rp), 0);
   const totalRealisasi = targetRealisasi.reduce((sum, r) => sum + Number(r.realisasi_rp), 0);
@@ -59,6 +60,16 @@ export default async function DashboardPage() {
         Potensi, realisasi, dan progres inventarisasi Pendapatan Asli Daerah Provinsi NTT
         secara lintas Pokja, diperbarui langsung dari data lapangan.
       </p>
+
+      {error && (
+        <div className="card" style={{ borderColor: "var(--status-red)", background: "var(--status-red-tint)", marginBottom: 20 }}>
+          <p style={{ fontSize: 13, fontWeight: 600, color: "var(--status-red)", margin: 0 }}>Gagal memuat data jenis_pad</p>
+          <p className="mono" style={{ fontSize: 12, color: "var(--status-red)", margin: "6px 0 0" }}>{error}</p>
+          <p style={{ fontSize: 12.5, color: "var(--text-secondary)", margin: "8px 0 0" }}>
+            Jalankan <code>supabase/schema_04_fix_rls_gaps.sql</code> di SQL Editor Supabase.
+          </p>
+        </div>
+      )}
 
       <div className="grid-cards" style={{ marginBottom: 22 }}>
         <div className="stat-card">

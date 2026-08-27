@@ -7,16 +7,20 @@ export const revalidate = 0;
 
 async function getData() {
   const db = await createServerSupabase();
-  const { data: jenisPad } = await db.from("jenis_pad").select("*");
-  const { data: objekPad } = await db
+  const { data: jenisPad, error: jenisPadError } = await db.from("jenis_pad").select("*");
+  const { data: objekPad, error: objekPadError } = await db
     .from("objek_pad")
     .select("*, jenis_pad(nama)")
     .order("created_at", { ascending: false });
-  return { jenisPad: jenisPad ?? [], objekPad: objekPad ?? [] };
+  return {
+    jenisPad: jenisPad ?? [],
+    objekPad: objekPad ?? [],
+    error: jenisPadError?.message || objekPadError?.message || null,
+  };
 }
 
 export default async function ObjekPadPage() {
-  const { jenisPad, objekPad } = await getData();
+  const { jenisPad, objekPad, error } = await getData();
 
   return (
     <div>
@@ -26,6 +30,17 @@ export default async function ObjekPadPage() {
         Inventarisasi, identifikasi, dan validasi objek retribusi utilitas jalan, alat berat,
         dan pajak air permukaan.
       </p>
+
+      {error && (
+        <div className="card" style={{ borderColor: "var(--status-red)", background: "var(--status-red-tint)", marginBottom: 20 }}>
+          <p style={{ fontSize: 13, fontWeight: 600, color: "var(--status-red)", margin: 0 }}>Gagal memuat data</p>
+          <p className="mono" style={{ fontSize: 12, color: "var(--status-red)", margin: "6px 0 0" }}>{error}</p>
+          <p style={{ fontSize: 12.5, color: "var(--text-secondary)", margin: "8px 0 0" }}>
+            Kemungkinan tabel <code>jenis_pad</code> belum punya RLS policy / grant untuk role &ldquo;authenticated&rdquo;.
+            Jalankan <code>supabase/schema_04_fix_rls_gaps.sql</code> di SQL Editor Supabase.
+          </p>
+        </div>
+      )}
 
       <div style={{ marginBottom: 24 }}>
         <ObjekPadForm jenisPad={jenisPad} />

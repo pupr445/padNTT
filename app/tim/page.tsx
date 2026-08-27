@@ -4,12 +4,12 @@ export const revalidate = 0;
 
 async function getData() {
   const db = await createServerSupabase();
-  const { data } = await db.from("tim_struktur").select("*").order("nomor", { ascending: true });
-  return data ?? [];
+  const { data, error } = await db.from("tim_struktur").select("*").order("nomor", { ascending: true });
+  return { anggota: data ?? [], error: error?.message ?? null };
 }
 
 export default async function TimPage() {
-  const anggota = await getData();
+  const { anggota, error } = await getData();
 
   const kelompok = anggota.reduce((acc: Record<string, any[]>, a) => {
     const key = a.pokja ? `Pokja ${a.pokja}` : a.kedudukan;
@@ -26,7 +26,18 @@ export default async function TimPage() {
         Susunan Tim Terpadu Optimalisasi Pendapatan Asli Daerah pada Dinas PUPR Provinsi NTT.
       </p>
 
-      {Object.keys(kelompok).length === 0 && (
+      {error && (
+        <div className="card" style={{ borderColor: "var(--status-red)", background: "var(--status-red-tint)", marginBottom: 20 }}>
+          <p style={{ fontSize: 13, fontWeight: 600, color: "var(--status-red)", margin: 0 }}>Gagal memuat data tim_struktur</p>
+          <p className="mono" style={{ fontSize: 12, color: "var(--status-red)", margin: "6px 0 0" }}>{error}</p>
+          <p style={{ fontSize: 12.5, color: "var(--text-secondary)", margin: "8px 0 0" }}>
+            Kemungkinan besar tabel ini belum punya RLS policy / grant untuk role &ldquo;authenticated&rdquo;.
+            Jalankan <code>supabase/schema_04_fix_rls_gaps.sql</code> di SQL Editor Supabase.
+          </p>
+        </div>
+      )}
+
+      {!error && Object.keys(kelompok).length === 0 && (
         <div className="empty-state">
           Belum ada data. Impor data lampiran SK ke tabel <code>tim_struktur</code> lewat Supabase.
         </div>
