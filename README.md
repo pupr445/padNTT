@@ -8,11 +8,12 @@ Jalan, Retribusi Pelayanan Alat Berat, dan Pajak Air Permukaan.
 (file storage) · Cloudflare Workers (hosting, via OpenNext) · GitHub Actions (CI/CD
 auto-deploy) · Leaflet (peta potensi PAD)
 
-> Riwayat pembaruan besar: desain ulang total UI/UX (sistem desain baru, lihat bagian
-> 7), penambahan halaman **Peta Potensi PAD** (GIS, bagian 8), dan **auto-deploy ke
-> Cloudflare lewat GitHub Actions** setiap kali ada commit ke `main` (bagian 5) — jadi
-> Anda tidak perlu menjalankan `npm run deploy` manual lagi, cukup commit/push lewat
-> GitHub (bisa sepenuhnya dari browser, tanpa CLI).
+> Riwayat pembaruan besar: desain ulang total UI/UX (sistem desain baru, bagian 6),
+> penambahan halaman **Peta Potensi PAD** (GIS, bagian 7), halaman **kelola akun/role**
+> khusus Super Admin (bagian 8), dan **auto-deploy ke Cloudflare lewat GitHub Actions**
+> setiap kali ada commit ke `main` (bagian 5) — jadi Anda tidak perlu menjalankan
+> `npm run deploy` manual lagi, cukup commit/push lewat GitHub (bisa sepenuhnya dari
+> browser, tanpa CLI).
 
 ## 1. Setup Supabase
 
@@ -28,9 +29,10 @@ auto-deploy) · Leaflet (peta potensi PAD)
    - Trigger otomatis membuat baris di tabel `profiles` dengan role default `viewer`.
    - Buka **Table Editor → profiles**, ubah kolom `role` akun tadi menjadi `super_admin`
      (atau lewat SQL Editor: `update profiles set role = 'super_admin' where email = 'admin@ntt.go.id';`).
-   - Akun berikutnya (ketua Pokja, anggota, Bapenda, dst.) dibuat dengan cara yang sama
-     lalu role-nya diatur oleh super_admin — belum ada halaman admin khusus untuk ini
-     di UI (lihat bagian "yang masih disederhanakan").
+   - **Akun pertama ini WAJIB lewat cara manual di atas** (ayam-telur: perlu satu
+     super_admin dulu sebelum halaman admin bisa dipakai). Akun berikutnya (ketua
+     Pokja, anggota, Bapenda, dst.) tinggal diundang lewat halaman `/admin` di
+     aplikasi begitu super_admin pertama sudah login — lihat bagian 6.
 
 ## 2. Setup Backblaze B2
 
@@ -126,7 +128,22 @@ legenda yang sama dengan dashboard. Form "Tambah objek PAD" sekarang punya tombo
 **"Ambil lokasi saat ini"** yang memakai GPS perangkat (browser Geolocation API) untuk
 mengisi koordinat otomatis saat petugas di lapangan.
 
-## 8. Struktur folder
+## 8. Kelola akun (`/admin`)
+
+Khusus role `super_admin` -- link "Kelola akun" otomatis muncul di sidebar. Dua hal
+bisa dilakukan di sini:
+
+- **Undang anggota baru**: isi email + nama + role + Pokja -> sistem membuat akun
+  Supabase Auth dan mengirim email berisi link untuk anggota tersebut mengatur
+  password sendiri (tidak ada password sementara yang perlu Anda kirim manual).
+- **Ubah role/Pokja/status aktif** anggota yang sudah ada, langsung dari tabel --
+  perubahan berlaku seketika lewat Row Level Security, tidak perlu deploy ulang
+  atau minta anggota logout-login.
+
+Akun `super_admin` tidak bisa menonaktifkan dirinya sendiri lewat halaman ini
+(pengaman supaya tidak ada yang terkunci keluar sistem tanpa sengaja).
+
+## 9. Struktur folder
 
 ```
 app/
@@ -140,12 +157,14 @@ app/
   tindak-lanjut/page.tsx    -> Log tindak lanjut bergaya timeline (Pokja II)
   laporan/page.tsx          -> Laporan berkala (Pokja III)
   tim/page.tsx              -> Struktur tim sesuai lampiran SK
+  admin/                    -> Kelola akun & role (khusus super_admin)
   api/upload/presign/       -> API route presigned URL upload ke B2
 lib/
   supabase/client.ts        -> Klien Supabase browser
   supabase/server.ts        -> Klien Supabase server (RLS) + klien admin (service role)
   auth.ts                   -> getCurrentProfile()
   actions/auth.ts           -> Server action logout
+  actions/admin.ts          -> Server action undang anggota baru (Supabase Admin API)
   types.ts                  -> Tipe data & label role
   status.ts                 -> Satu sumber warna/legenda status (badge, dashboard, peta)
   icons.tsx                 -> Ikon SVG sidebar (tanpa dependency library ikon)
@@ -155,14 +174,14 @@ middleware.ts                -> Proteksi rute + refresh sesi login
 supabase/                    -> Skema SQL (lihat bagian 1)
 ```
 
-## 9. Alur upload file (foto/video/dokumen)
+## 10. Alur upload file (foto/video/dokumen)
 
 1. Browser minta presigned URL ke `POST /api/upload/presign`.
 2. Browser upload file langsung ke B2 pakai presigned URL (`PUT`), tidak lewat server.
 3. Metadata file disimpan ke tabel `lampiran` di Supabase, terhubung ke objek PAD /
    tindak lanjut / laporan terkait.
 
-## 10. Role pengguna & hak akses (RLS)
+## 11. Role pengguna & hak akses (RLS)
 
 Semua pengguna login bisa **melihat** seluruh data. Yang dibatasi per role adalah hak
 **menulis/mengubah**, ditegakkan di level database lewat Row Level Security Postgres:
@@ -180,13 +199,13 @@ Semua pengguna login bisa **melihat** seluruh data. Yang dibatasi per role adala
 Tabel `audit_logs` mencatat otomatis setiap insert/update/delete pada tabel inti lewat
 trigger database.
 
-## 11. Catatan biaya B2
+## 12. Catatan biaya B2
 
 Backblaze B2 punya free tier (10GB storage) tanpa kartu kredit di awal. Kalau nanti
 mau pindah ke Cloudflare R2, tinggal ganti isi `lib/storage.ts` dan env vars — struktur
 kode lain tidak berubah karena keduanya S3-compatible.
 
-## 12. Status pengujian
+## 13. Status pengujian
 
 `npm run build` dan `npx tsc --noEmit` sukses tanpa error (termasuk setelah desain
 ulang UI dan penambahan halaman peta). Belum diuji dengan kredensial Supabase/B2
@@ -201,10 +220,14 @@ not found` saat `opennextjs-cloudflare build` -- itu bug kompatibilitas interop 
 antara Node 20 dan versi `wrangler` yang dipakai, sudah diverifikasi hilang total di
 Node 22. Kalau develop lokal masih pakai Node 20, upgrade dulu (nvm install 22).
 
-## 13. Yang masih disederhanakan (roadmap lanjutan)
+## 14. Yang masih disederhanakan (roadmap lanjutan)
 
-- **Halaman admin kelola akun/role**: belum ada UI untuk super_admin mengubah role
-  user lain — sementara lewat Table Editor/SQL Editor Supabase (lihat bagian 1.4).
+- **Halaman admin kelola akun/role**: sudah ada di `/admin` (khusus role `super_admin`,
+  muncul otomatis di sidebar). Bisa undang anggota baru lewat email (mengirim link
+  set password via Supabase Auth), lalu ubah role/Pokja/status aktif langsung dari
+  tabel tanpa lewat SQL Editor lagi. Kalau nanti mengundang banyak anggota sekaligus,
+  pertimbangkan setup SMTP custom di Supabase (Settings -> Auth -> SMTP) karena
+  pengirim email bawaan Supabase punya batas kirim per jam.
 - **Formula perhitungan potensi PAD**: tabel `pad_tariffs` sudah configurable, tapi
   tarifnya masih 0 (placeholder) — perlu diisi angka riil dari Perda NTT No 1/2026,
   idealnya divalidasi Bapenda dulu.

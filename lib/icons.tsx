@@ -79,3 +79,13 @@ export function IconLogout({ size = 16 }: IconProps) {
     </svg>
   );
 }
+
+export function IconShieldUser({ size = 16 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3Z" />
+      <circle cx="12" cy="11" r="2" />
+      <path d="M9 16c0-1.7 1.3-3 3-3s3 1.3 3 3" />
+    </svg>
+  );
+}

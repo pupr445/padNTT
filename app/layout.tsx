@@ -36,7 +36,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 </div>
               </div>
 
-              <SidebarNav />
+              <SidebarNav role={profile.role} />
 
               <div className="sidebar-footer">
                 <div className="user-card">

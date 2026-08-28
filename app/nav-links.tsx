@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { IconGrid, IconMapPin, IconLayers, IconFlag, IconFileText, IconUsers } from "@/lib/icons";
+import { IconGrid, IconMapPin, IconLayers, IconFlag, IconFileText, IconUsers, IconShieldUser } from "@/lib/icons";
+import type { Role } from "@/lib/types";
 
 const navGroups = [
   {
@@ -10,18 +11,18 @@ const navGroups = [
     items: [{ href: "/", label: "Dashboard", icon: IconGrid }],
   },
   {
-    label: "Pokja I — Inventarisasi",
+    label: "Pokja I \u2014 Inventarisasi",
     items: [
       { href: "/objek-pad", label: "Objek PAD", icon: IconLayers },
       { href: "/peta", label: "Peta potensi", icon: IconMapPin },
     ],
   },
   {
-    label: "Pokja II — Intervensi",
+    label: "Pokja II \u2014 Intervensi",
     items: [{ href: "/tindak-lanjut", label: "Tindak lanjut", icon: IconFlag }],
   },
   {
-    label: "Pokja III — Monev",
+    label: "Pokja III \u2014 Monev",
     items: [{ href: "/laporan", label: "Laporan berkala", icon: IconFileText }],
   },
   {
@@ -30,7 +31,7 @@ const navGroups = [
   },
 ];
 
-export default function SidebarNav() {
+export default function SidebarNav({ role }: { role: Role }) {
   const pathname = usePathname();
 
   return (
@@ -50,6 +51,16 @@ export default function SidebarNav() {
           })}
         </div>
       ))}
+
+      {role === "super_admin" && (
+        <div>
+          <div className="nav-group-label">Administrasi</div>
+          <Link href="/admin" className={`nav-link${pathname.startsWith("/admin") ? " active" : ""}`}>
+            <IconShieldUser size={15} />
+            Kelola akun
+          </Link>
+        </div>
+      )}
     </nav>
   );
 }
