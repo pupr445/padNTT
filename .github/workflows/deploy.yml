@@ -54,7 +54,6 @@ jobs:
             B2_KEY_ID
             B2_APPLICATION_KEY
             B2_BUCKET_NAME
-            B2_PUBLIC_URL
         env:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           B2_REGION: ${{ secrets.B2_REGION }}
@@ -62,5 +61,4 @@ jobs:
           B2_KEY_ID: ${{ secrets.B2_KEY_ID }}
           B2_APPLICATION_KEY: ${{ secrets.B2_APPLICATION_KEY }}
           B2_BUCKET_NAME: ${{ secrets.B2_BUCKET_NAME }}
-          B2_PUBLIC_URL: ${{ secrets.B2_PUBLIC_URL }}
 
