@@ -33,9 +33,20 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
           preCommands: npx opennextjs-cloudflare build
-          # Nilai rahasia ini didorong ke "wrangler secret" Cloudflare (bukan cuma
-          # dipakai saat build) supaya bisa dibaca lewat process.env saat aplikasi
-          # jalan di Workers -- wajib untuk kredensial server-only (bukan NEXT_PUBLIC_*).
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+      # Dipisah jadi step tersendiri, DIJALANKAN SETELAH deploy di atas --
+      # "wrangler secret put" mengharuskan Worker-nya sudah ada di Cloudflare.
+      # Kalau digabung dalam satu step (secret push sebelum deploy pertama),
+      # akan gagal karena Worker belum pernah dibuat. Aman dijalankan berkali-kali
+      # (idempotent) -- secret langsung aktif tanpa perlu deploy ulang.
+      - name: Push secrets server-only ke Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           secrets: |
             SUPABASE_SERVICE_ROLE_KEY
             B2_REGION
@@ -45,8 +56,6 @@ jobs:
             B2_BUCKET_NAME
             B2_PUBLIC_URL
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           B2_REGION: ${{ secrets.B2_REGION }}
           B2_ENDPOINT: ${{ secrets.B2_ENDPOINT }}
@@ -54,3 +63,4 @@ jobs:
           B2_APPLICATION_KEY: ${{ secrets.B2_APPLICATION_KEY }}
           B2_BUCKET_NAME: ${{ secrets.B2_BUCKET_NAME }}
           B2_PUBLIC_URL: ${{ secrets.B2_PUBLIC_URL }}
+
