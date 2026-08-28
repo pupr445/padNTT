@@ -195,6 +195,12 @@ sungguhan — itu baru bisa dites setelah `.env.local` diisi kredensial asli.
 Catatan versi: Next.js 15.5.24 (bukan versi lama yang punya kerentanan keamanan kritis
 CVE-2025-66478); Leaflet 1.9.x untuk peta.
 
+**Wajib Node.js 22 atau lebih baru** (workflow CI dan `package.json` sudah dikunci ke
+ini). Node 20 gagal build dengan error `SyntaxError: Named export 'unstable_readConfig'
+not found` saat `opennextjs-cloudflare build` -- itu bug kompatibilitas interop CJS/ESM
+antara Node 20 dan versi `wrangler` yang dipakai, sudah diverifikasi hilang total di
+Node 22. Kalau develop lokal masih pakai Node 20, upgrade dulu (nvm install 22).
+
 ## 13. Yang masih disederhanakan (roadmap lanjutan)
 
 - **Halaman admin kelola akun/role**: belum ada UI untuk super_admin mengubah role
