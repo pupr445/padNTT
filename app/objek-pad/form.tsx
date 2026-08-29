@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { queueMutation, isLikelyNetworkError } from "@/lib/offline-queue";
 import type { JenisPad } from "@/lib/types";
 import { IconMapPin } from "@/lib/icons";
 
@@ -12,6 +13,7 @@ export default function ObjekPadForm({ jenisPad }: { jenisPad: JenisPad[] }) {
   const [saving, setSaving] = useState(false);
   const [locating, setLocating] = useState(false);
   const [error, setError] = useState("");
+  const [queuedMsg, setQueuedMsg] = useState("");
   const [form, setForm] = useState({
     jenis_pad_id: "",
     nama_objek: "",
@@ -55,7 +57,7 @@ export default function ObjekPadForm({ jenisPad }: { jenisPad: JenisPad[] }) {
     }
 
     setSaving(true);
-    const { error: insertError } = await supabase.from("objek_pad").insert({
+    const payload = {
       jenis_pad_id: form.jenis_pad_id,
       nama_objek: form.nama_objek.trim(),
       kabupaten_kota: form.kabupaten_kota.trim() || null,
@@ -63,17 +65,45 @@ export default function ObjekPadForm({ jenisPad }: { jenisPad: JenisPad[] }) {
       koordinat_lat: form.koordinat_lat ? Number(form.koordinat_lat) : null,
       koordinat_lng: form.koordinat_lng ? Number(form.koordinat_lng) : null,
       status_verifikasi: "proses_verifikasi",
-    });
+    };
+
+    let queued = false;
+    try {
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        // Jangan buang waktu nunggu timeout kalau memang sudah jelas offline.
+        await queueMutation("objek_pad", payload, form.nama_objek.trim());
+        queued = true;
+        setQueuedMsg("Tersimpan di perangkat ini (sedang offline) -- akan terkirim otomatis begitu koneksi kembali.");
+      } else {
+        const { error: insertError } = await supabase.from("objek_pad").insert(payload);
+        if (insertError) throw insertError;
+      }
+    } catch (err: any) {
+      if (isLikelyNetworkError(err)) {
+        await queueMutation("objek_pad", payload, form.nama_objek.trim());
+        queued = true;
+        setQueuedMsg("Koneksi terputus -- data tersimpan di perangkat ini, akan terkirim otomatis begitu online.");
+      } else {
+        setError(err.message ?? "Gagal menyimpan.");
+        setSaving(false);
+        return;
+      }
+    }
     setSaving(false);
 
-    if (insertError) {
-      setError(insertError.message);
-      return;
-    }
-
     setForm({ jenis_pad_id: "", nama_objek: "", kabupaten_kota: "", lokasi: "", koordinat_lat: "", koordinat_lng: "" });
-    setOpen(false);
-    router.refresh();
+
+    if (queued) {
+      // Beri jeda sebentar biar pesan "tersimpan offline" kebaca dulu.
+      setTimeout(() => {
+        setOpen(false);
+        setQueuedMsg("");
+        router.refresh();
+      }, 1400);
+    } else {
+      setOpen(false);
+      router.refresh();
+    }
   }
 
   if (!open) {
@@ -154,6 +184,7 @@ export default function ObjekPadForm({ jenisPad }: { jenisPad: JenisPad[] }) {
       </div>
 
       {error && <p className="error-text">{error}</p>}
+      {queuedMsg && <p style={{ fontSize: 12.5, color: "var(--status-yellow)" }}>{queuedMsg}</p>}
 
       <div style={{ display: "flex", gap: 8 }}>
         <button type="submit" className="btn btn-primary" disabled={saving}>

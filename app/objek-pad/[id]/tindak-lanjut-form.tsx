@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { queueMutation, isLikelyNetworkError } from "@/lib/offline-queue";
 
 const jenisOptions = [
   { value: "sosialisasi", label: "Sosialisasi" },
@@ -29,6 +30,7 @@ export default function TambahTindakLanjut({
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [queuedMsg, setQueuedMsg] = useState("");
   const [form, setForm] = useState({ jenis_kegiatan: "sosialisasi", deskripsi: "", pokja: pokjaOptions[0] ?? "I", pic: "" });
   const supabase = createClient();
 
@@ -48,21 +50,48 @@ export default function TambahTindakLanjut({
     }
     setSaving(true);
     setError("");
-    const { error: insertError } = await supabase.from("tindak_lanjut").insert({
+    const payload = {
       objek_pad_id: objekPadId,
       jenis_kegiatan: form.jenis_kegiatan,
       deskripsi: form.deskripsi.trim(),
       pokja: form.pokja,
       pic: form.pic.trim() || null,
-    });
-    setSaving(false);
-    if (insertError) {
-      setError(insertError.message);
-      return;
+    };
+
+    let queued = false;
+    try {
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        await queueMutation("tindak_lanjut", payload, form.deskripsi.trim());
+        queued = true;
+        setQueuedMsg("Tersimpan di perangkat ini (sedang offline) -- akan terkirim otomatis begitu koneksi kembali.");
+      } else {
+        const { error: insertError } = await supabase.from("tindak_lanjut").insert(payload);
+        if (insertError) throw insertError;
+      }
+    } catch (err: any) {
+      if (isLikelyNetworkError(err)) {
+        await queueMutation("tindak_lanjut", payload, form.deskripsi.trim());
+        queued = true;
+        setQueuedMsg("Koneksi terputus -- data tersimpan di perangkat ini, akan terkirim otomatis begitu online.");
+      } else {
+        setError(err.message ?? "Gagal menyimpan.");
+        setSaving(false);
+        return;
+      }
     }
+    setSaving(false);
     setForm({ jenis_kegiatan: "sosialisasi", deskripsi: "", pokja: pokjaOptions[0] ?? "I", pic: "" });
-    setOpen(false);
-    router.refresh();
+
+    if (queued) {
+      setTimeout(() => {
+        setOpen(false);
+        setQueuedMsg("");
+        router.refresh();
+      }, 1400);
+    } else {
+      setOpen(false);
+      router.refresh();
+    }
   }
 
   if (!open) {
@@ -111,6 +140,7 @@ export default function TambahTindakLanjut({
         <input value={form.pic} onChange={(e) => setForm({ ...form, pic: e.target.value })} placeholder="Nama petugas" />
       </div>
       {error && <p className="error-text">{error}</p>}
+      {queuedMsg && <p style={{ fontSize: 12.5, color: "var(--status-yellow)" }}>{queuedMsg}</p>}
       <div style={{ display: "flex", gap: 8 }}>
         <button type="submit" className="btn btn-primary" disabled={saving}>
           {saving ? "Menyimpan..." : "Simpan"}

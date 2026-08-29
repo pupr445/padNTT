@@ -4,10 +4,21 @@ import { ROLE_LABEL } from "@/lib/types";
 import { signOutAction } from "@/lib/actions/auth";
 import { IconLogout } from "@/lib/icons";
 import SidebarNav from "./nav-links";
+import OfflineStatusBadge from "./offline-status";
+import ServiceWorkerRegister from "./sw-register";
 
 export const metadata = {
   title: "OPTIMA PAD NTT",
   description: "Sistem Optimalisasi Pendapatan Asli Daerah -- Tim Terpadu, Dinas PUPR Provinsi NTT",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/icons/icon-192.png",
+    apple: "/icons/apple-touch-icon.png",
+  },
+};
+
+export const viewport = {
+  themeColor: "#0e6e68",
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -16,6 +27,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="id">
       <body>
+        <ServiceWorkerRegister />
         {!profile ? (
           // Halaman /login tidak pakai sidebar -- middleware sudah mengarahkan
           // pengguna belum login ke sini, jadi cukup render children apa adanya.
@@ -37,6 +49,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               </div>
 
               <SidebarNav role={profile.role} />
+              <OfflineStatusBadge />
 
               <div className="sidebar-footer">
                 <div className="user-card">
