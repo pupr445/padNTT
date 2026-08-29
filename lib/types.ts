@@ -105,6 +105,7 @@ export type Lampiran = {
   r2_key: string;
   nama_file: string;
   tipe_file: string | null;
+  content_type: string | null;
   objek_pad_id: string | null;
   tindak_lanjut_id: string | null;
   created_at: string;

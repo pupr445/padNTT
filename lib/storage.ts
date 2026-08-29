@@ -15,18 +15,75 @@ export const storage = new S3Client({
 
 const BUCKET = process.env.B2_BUCKET_NAME!;
 
-// Bikin key yang konsisten: {kategori}/{objekId}/{timestamp}-{filename}
-export function buildStorageKey(kategori: string, refId: string, filename: string) {
-  const safeName = filename.replace(/[^a-zA-Z0-9.\-_]/g, "_");
-  return `${kategori}/${refId}/${Date.now()}-${safeName}`;
+// Kategori lampiran yang diizinkan -- dipakai untuk validasi di route presign
+// (jangan hanya percaya nilai dari client) dan untuk membangun key storage.
+export const KATEGORI_LAMPIRAN = ["foto-lapangan", "video", "dokumen"] as const;
+export type KategoriLampiran = (typeof KATEGORI_LAMPIRAN)[number];
+
+// Content-Type yang diizinkan per kategori -- mencegah orang mengunggah file
+// executable/berbahaya dengan menyamar sebagai kategori lain.
+const ALLOWED_CONTENT_TYPES: Record<KategoriLampiran, RegExp> = {
+  "foto-lapangan": /^image\/(jpeg|png|webp|heic|heif)$/,
+  video: /^video\/(mp4|quicktime|webm)$/,
+  dokumen: /^(application\/pdf|application\/msword|application\/vnd\.openxmlformats-officedocument\.wordprocessingml\.document)$/,
+};
+
+// Batas ukuran per kategori (bytes) -- ditegakkan di presign (ContentLength)
+// supaya tidak bisa dilewati dengan mengubah nilai di browser.
+const MAX_SIZE_BYTES: Record<KategoriLampiran, number> = {
+  "foto-lapangan": 15 * 1024 * 1024, // 15 MB -- cukup untuk foto HP resolusi tinggi
+  video: 200 * 1024 * 1024, // 200 MB
+  dokumen: 25 * 1024 * 1024, // 25 MB
+};
+
+export function isKategoriLampiran(v: unknown): v is KategoriLampiran {
+  return typeof v === "string" && (KATEGORI_LAMPIRAN as readonly string[]).includes(v);
 }
 
-// Presigned URL untuk upload langsung dari browser (PUT), berlaku 5 menit
-export async function getUploadUrl(key: string, contentType: string) {
+export function validateUpload(kategori: KategoriLampiran, contentType: string, size: number): string | null {
+  if (!ALLOWED_CONTENT_TYPES[kategori].test(contentType)) {
+    return `Tipe file "${contentType}" tidak diizinkan untuk kategori ${kategori}.`;
+  }
+  if (!Number.isFinite(size) || size <= 0) {
+    return "Ukuran file tidak valid.";
+  }
+  if (size > MAX_SIZE_BYTES[kategori]) {
+    const maxMb = Math.round(MAX_SIZE_BYTES[kategori] / (1024 * 1024));
+    return `File melebihi batas ${maxMb} MB untuk kategori ${kategori}.`;
+  }
+  return null;
+}
+
+// UUID v4 longgar (cukup untuk validasi format id dari tabel Supabase/Postgres)
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export function isValidRefId(v: unknown): v is string {
+  return typeof v === "string" && UUID_RE.test(v);
+}
+
+function sanitizeSegment(v: string) {
+  return v.replace(/[^a-zA-Z0-9\-_]/g, "_");
+}
+
+// Bikin key yang konsisten: {kategori}/{objekId}/{timestamp}-{filename}
+// kategori & refId disaring juga (bukan cuma filename) supaya tidak bisa
+// dipakai untuk path traversal ("../") di key storage.
+export function buildStorageKey(kategori: string, refId: string, filename: string) {
+  const safeKategori = sanitizeSegment(kategori);
+  const safeRefId = sanitizeSegment(refId);
+  const safeName = sanitizeSegment(filename);
+  return `${safeKategori}/${safeRefId}/${Date.now()}-${safeName}`;
+}
+
+// Presigned URL untuk upload langsung dari browser (PUT), berlaku 5 menit.
+// contentLength diikat ke command supaya B2 menolak kalau ukuran aktual saat
+// PUT tidak sama persis dengan yang divalidasi di presign (mencegah "bait and
+// switch": minta presign untuk file kecil lalu upload file lain yang lebih besar).
+export async function getUploadUrl(key: string, contentType: string, contentLength: number) {
   const command = new PutObjectCommand({
     Bucket: BUCKET,
     Key: key,
     ContentType: contentType,
+    ContentLength: contentLength,
   });
   return getSignedUrl(storage, command, { expiresIn: 300 });
 }

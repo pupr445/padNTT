@@ -33,11 +33,17 @@ export default function UploadLampiran({ objekPadId }: { objekPadId: string }) {
           refId: objekPadId,
           filename: file.name,
           contentType: file.type,
+          size: file.size,
         }),
       });
-      if (!presignRes.ok) throw new Error("Gagal membuat URL unggah.");
+      if (!presignRes.ok) {
+        const body = await presignRes.json().catch(() => ({}));
+        throw new Error(body.error || "Gagal membuat URL unggah.");
+      }
       const { uploadUrl, key } = await presignRes.json();
 
+      // contentLength diikat ke presigned URL di server -- kalau file yang
+      // benar-benar dikirim di sini ukurannya beda, B2 akan menolak PUT ini.
       const putRes = await fetch(uploadUrl, {
         method: "PUT",
         headers: { "Content-Type": file.type },
@@ -49,6 +55,7 @@ export default function UploadLampiran({ objekPadId }: { objekPadId: string }) {
         r2_key: key,
         nama_file: file.name,
         tipe_file: kategori,
+        content_type: file.type,
         ukuran_bytes: file.size,
         objek_pad_id: objekPadId,
       });
@@ -70,6 +77,9 @@ export default function UploadLampiran({ objekPadId }: { objekPadId: string }) {
       </label>
       <input id="lampiran-input" type="file" onChange={handleFile} disabled={uploading} accept="image/*,video/*,.pdf,.doc,.docx" style={{ display: "none" }} />
       {error && <p className="error-text" style={{ marginTop: 8 }}>{error}</p>}
+      <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 6 }}>
+        Foto maks. 15 MB, dokumen maks. 25 MB, video maks. 200 MB.
+      </p>
     </div>
   );
 }
