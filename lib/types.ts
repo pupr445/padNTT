@@ -100,6 +100,17 @@ export type TindakLanjut = {
   status: "berjalan" | "selesai" | "tertunda";
 };
 
+export type LaporanBerkala = {
+  id: string;
+  judul: string;
+  periode: string;
+  ringkasan: string | null;
+  pokja: string | null;
+  dibuat_oleh: string | null;
+  dibuat_oleh_id: string | null;
+  created_at: string;
+};
+
 export type Lampiran = {
   id: string;
   r2_key: string;

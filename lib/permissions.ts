@@ -77,9 +77,36 @@ export function canManageAkun(role: Role | null | undefined) {
 }
 
 // lampiran -- upload: semua yang login boleh (RLS memang dibuka untuk semua);
-// hapus: super_admin saja, supaya bukti lapangan tidak mudah hilang
+// hapus: super_admin + pimpinan (ketua_tim/wakil_ketua/sekretariat), sesuai
+// schema_05_lampiran_hardening.sql -- setiap hapus tetap tercatat di audit_logs.
 export function canDeleteLampiran(role: Role | null | undefined) {
-  return role === "super_admin";
+  return has(role, [...PIMPINAN]);
+}
+
+// tindak_lanjut -- delete: Pokja pemilik baris (sama seperti update) + pimpinan + super_admin
+export function canDeleteTindakLanjut(
+  role: Role | null | undefined,
+  rowPokja: string | null | undefined,
+  userPokja: "I" | "II" | "III" | null | undefined
+) {
+  if (has(role, PIMPINAN)) return true;
+  return !!rowPokja && !!userPokja && rowPokja === userPokja;
+}
+
+// laporan_berkala -- update/delete: pembuat asli (dibuat_oleh_id) + pimpinan + super_admin
+export function canEditLaporan(
+  role: Role | null | undefined,
+  dibuatOlehId: string | null | undefined,
+  userId: string | null | undefined
+) {
+  if (has(role, PIMPINAN)) return true;
+  return !!dibuatOlehId && !!userId && dibuatOlehId === userId;
+}
+export const canDeleteLaporan = canEditLaporan;
+
+// target_realisasi -- delete: sama seperti insert/update (Bapenda + pimpinan + super_admin)
+export function canDeleteTargetRealisasi(role: Role | null | undefined) {
+  return has(role, ["bapenda", ...PIMPINAN]);
 }
 
 // audit_logs -- baca: pimpinan + Pokja III saja (tugasnya memang monitoring/evaluasi)

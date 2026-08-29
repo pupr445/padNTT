@@ -2,10 +2,11 @@ import Link from "next/link";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { getDownloadUrl } from "@/lib/storage";
 import { getCurrentProfile } from "@/lib/auth";
-import { canCreateTindakLanjut, tindakLanjutPokjaOptions } from "@/lib/permissions";
+import { canCreateTindakLanjut, canDeleteLampiran, canDeleteTindakLanjut, tindakLanjutPokjaOptions } from "@/lib/permissions";
 import { ROLE_LABEL } from "@/lib/types";
 import UploadLampiran from "./upload";
 import TambahTindakLanjut from "./tindak-lanjut-form";
+import { DeleteLampiranButton, DeleteTindakLanjutButton } from "./delete-buttons";
 import { statusMeta } from "@/lib/status";
 import { IconMapPin, IconFileText } from "@/lib/icons";
 
@@ -48,6 +49,7 @@ export default async function ObjekDetailPage({ params }: { params: Promise<{ id
   const canCreateTL = canCreateTindakLanjut(profile?.role);
   const pokjaOptions = tindakLanjutPokjaOptions(profile?.role, profile?.pokja);
   const roleLabel = profile ? ROLE_LABEL[profile.role] : "-";
+  const canDeleteAttachment = canDeleteLampiran(profile?.role);
 
   const meta = statusMeta(objek.status_verifikasi);
   const hasCoords = objek.koordinat_lat && objek.koordinat_lng;
@@ -75,9 +77,16 @@ export default async function ObjekDetailPage({ params }: { params: Promise<{ id
         <UploadLampiran objekPadId={objek.id} />
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: 10, marginTop: 14 }}>
           {lampiran.map((l) => (
-            <a key={l.id} href={l.downloadUrl} target="_blank" rel="noreferrer" className="card card-link" style={{ padding: 10, textAlign: "center" }}>
-              <p style={{ fontSize: 11.5, margin: 0, wordBreak: "break-word" }}>{l.nama_file}</p>
-            </a>
+            <div key={l.id} className="card" style={{ padding: 10, textAlign: "center", position: "relative" }}>
+              <a href={l.downloadUrl} target="_blank" rel="noreferrer" style={{ display: "block" }}>
+                <p style={{ fontSize: 11.5, margin: 0, wordBreak: "break-word" }}>{l.nama_file}</p>
+              </a>
+              {canDeleteAttachment && (
+                <div style={{ marginTop: 6 }}>
+                  <DeleteLampiranButton id={l.id} />
+                </div>
+              )}
+            </div>
           ))}
           {lampiran.length === 0 && <p style={{ fontSize: 13, color: "var(--text-muted)", gridColumn: "1 / -1" }}>Belum ada lampiran.</p>}
         </div>
@@ -93,11 +102,14 @@ export default async function ObjekDetailPage({ params }: { params: Promise<{ id
         />
         <div className="stack" style={{ marginTop: 14 }}>
           {tindakLanjut.map((t) => (
-            <div key={t.id} style={{ borderTop: "1px solid var(--line)", paddingTop: 10 }}>
-              <p style={{ fontSize: 13.5, margin: 0 }}>{t.deskripsi ?? t.jenis_kegiatan}</p>
-              <p className="mono" style={{ fontSize: 11, color: "var(--text-muted)", margin: "6px 0 0" }}>
-                {t.jenis_kegiatan} &middot; Pokja {t.pokja ?? "-"} &middot; {new Date(t.tanggal_kegiatan).toLocaleDateString("id-ID")}
-              </p>
+            <div key={t.id} style={{ borderTop: "1px solid var(--line)", paddingTop: 10, display: "flex", justifyContent: "space-between", gap: 10 }}>
+              <div>
+                <p style={{ fontSize: 13.5, margin: 0 }}>{t.deskripsi ?? t.jenis_kegiatan}</p>
+                <p className="mono" style={{ fontSize: 11, color: "var(--text-muted)", margin: "6px 0 0" }}>
+                  {t.jenis_kegiatan} &middot; Pokja {t.pokja ?? "-"} &middot; {new Date(t.tanggal_kegiatan).toLocaleDateString("id-ID")}
+                </p>
+              </div>
+              {canDeleteTindakLanjut(profile?.role, t.pokja, profile?.pokja) && <DeleteTindakLanjutButton id={t.id} />}
             </div>
           ))}
           {tindakLanjut.length === 0 && <p style={{ fontSize: 13, color: "var(--text-muted)" }}>Belum ada tindak lanjut.</p>}

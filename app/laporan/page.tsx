@@ -1,8 +1,9 @@
 import { createServerSupabase } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
-import { canCreateLaporan } from "@/lib/permissions";
+import { canCreateLaporan, canDeleteLaporan } from "@/lib/permissions";
 import { ROLE_LABEL } from "@/lib/types";
 import LaporanForm from "./form";
+import DeleteLaporanButton from "./delete-laporan-button";
 import { rupiah } from "@/lib/status";
 
 export const revalidate = 0;
@@ -72,13 +73,16 @@ export default async function LaporanPage() {
       </div>
 
       <div className="stack">
-        {laporan.map((l) => (
-          <div key={l.id} className="card">
-            <p style={{ fontSize: 13.5, fontWeight: 600, margin: 0 }}>{l.judul}</p>
-            <p style={{ fontSize: 12.5, color: "var(--text-secondary)", margin: "6px 0" }}>{l.ringkasan}</p>
-            <p className="mono" style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>
-              Periode {l.periode} &middot; Pokja {l.pokja ?? "-"} &middot; {new Date(l.created_at).toLocaleDateString("id-ID")}
-            </p>
+        {laporan.map((l: any) => (
+          <div key={l.id} className="card" style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+            <div>
+              <p style={{ fontSize: 13.5, fontWeight: 600, margin: 0 }}>{l.judul}</p>
+              <p style={{ fontSize: 12.5, color: "var(--text-secondary)", margin: "6px 0" }}>{l.ringkasan}</p>
+              <p className="mono" style={{ fontSize: 11, color: "var(--text-muted)", margin: 0 }}>
+                Periode {l.periode} &middot; Pokja {l.pokja ?? "-"} &middot; {new Date(l.created_at).toLocaleDateString("id-ID")}
+              </p>
+            </div>
+            {canDeleteLaporan(profile?.role, l.dibuat_oleh_id, profile?.id) && <DeleteLaporanButton id={l.id} />}
           </div>
         ))}
         {laporan.length === 0 && <div className="empty-state">Belum ada laporan tersimpan.</div>}
