@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { IconGrid, IconMapPin, IconLayers, IconFlag, IconFileText, IconUsers, IconShieldUser } from "@/lib/icons";
+import { IconGrid, IconMapPin, IconLayers, IconFlag, IconFileText, IconUsers, IconShieldUser, IconHistory } from "@/lib/icons";
+import { canViewAuditLog } from "@/lib/permissions";
 import type { Role } from "@/lib/types";
 
 const navGroups = [
@@ -52,13 +53,21 @@ export default function SidebarNav({ role }: { role: Role }) {
         </div>
       ))}
 
-      {role === "super_admin" && (
+      {(role === "super_admin" || canViewAuditLog(role)) && (
         <div>
           <div className="nav-group-label">Administrasi</div>
-          <Link href="/admin" className={`nav-link${pathname.startsWith("/admin") ? " active" : ""}`}>
-            <IconShieldUser size={15} />
-            Kelola akun
-          </Link>
+          {role === "super_admin" && (
+            <Link href="/admin" className={`nav-link${pathname.startsWith("/admin") ? " active" : ""}`}>
+              <IconShieldUser size={15} />
+              Kelola akun
+            </Link>
+          )}
+          {canViewAuditLog(role) && (
+            <Link href="/audit" className={`nav-link${pathname.startsWith("/audit") ? " active" : ""}`}>
+              <IconHistory size={15} />
+              Audit log
+            </Link>
+          )}
         </div>
       )}
     </nav>
