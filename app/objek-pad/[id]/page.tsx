@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { getDownloadUrl } from "@/lib/storage";
+import { getCurrentProfile } from "@/lib/auth";
+import { canCreateTindakLanjut, tindakLanjutPokjaOptions } from "@/lib/permissions";
+import { ROLE_LABEL } from "@/lib/types";
 import UploadLampiran from "./upload";
 import TambahTindakLanjut from "./tindak-lanjut-form";
 import { statusMeta } from "@/lib/status";
@@ -36,11 +39,15 @@ async function getData(id: string) {
 
 export default async function ObjekDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { objek, tindakLanjut, lampiran } = await getData(id);
+  const [{ objek, tindakLanjut, lampiran }, profile] = await Promise.all([getData(id), getCurrentProfile()]);
 
   if (!objek) {
     return <div className="empty-state">Objek tidak ditemukan.</div>;
   }
+
+  const canCreateTL = canCreateTindakLanjut(profile?.role);
+  const pokjaOptions = tindakLanjutPokjaOptions(profile?.role, profile?.pokja);
+  const roleLabel = profile ? ROLE_LABEL[profile.role] : "-";
 
   const meta = statusMeta(objek.status_verifikasi);
   const hasCoords = objek.koordinat_lat && objek.koordinat_lng;
@@ -78,7 +85,12 @@ export default async function ObjekDetailPage({ params }: { params: Promise<{ id
 
       <div className="card">
         <p className="section-label">Tindak lanjut</p>
-        <TambahTindakLanjut objekPadId={objek.id} />
+        <TambahTindakLanjut
+          objekPadId={objek.id}
+          canCreate={canCreateTL}
+          pokjaOptions={pokjaOptions}
+          roleLabel={roleLabel}
+        />
         <div className="stack" style={{ marginTop: 14 }}>
           {tindakLanjut.map((t) => (
             <div key={t.id} style={{ borderTop: "1px solid var(--line)", paddingTop: 10 }}>

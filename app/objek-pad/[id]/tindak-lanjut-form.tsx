@@ -14,13 +14,31 @@ const jenisOptions = [
   { value: "lainnya", label: "Lainnya" },
 ];
 
-export default function TambahTindakLanjut({ objekPadId }: { objekPadId: string }) {
+export default function TambahTindakLanjut({
+  objekPadId,
+  canCreate,
+  pokjaOptions,
+  roleLabel,
+}: {
+  objekPadId: string;
+  canCreate: boolean;
+  pokjaOptions: Array<"I" | "II" | "III">;
+  roleLabel: string;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [form, setForm] = useState({ jenis_kegiatan: "sosialisasi", deskripsi: "", pokja: "I", pic: "" });
+  const [form, setForm] = useState({ jenis_kegiatan: "sosialisasi", deskripsi: "", pokja: pokjaOptions[0] ?? "I", pic: "" });
   const supabase = createClient();
+
+  if (!canCreate) {
+    return (
+      <p style={{ fontSize: 12.5, color: "var(--text-muted)" }}>
+        Peran Anda ({roleLabel}) hanya bisa melihat riwayat tindak lanjut objek ini.
+      </p>
+    );
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -42,7 +60,7 @@ export default function TambahTindakLanjut({ objekPadId }: { objekPadId: string 
       setError(insertError.message);
       return;
     }
-    setForm({ jenis_kegiatan: "sosialisasi", deskripsi: "", pokja: "I", pic: "" });
+    setForm({ jenis_kegiatan: "sosialisasi", deskripsi: "", pokja: pokjaOptions[0] ?? "I", pic: "" });
     setOpen(false);
     router.refresh();
   }
@@ -68,10 +86,14 @@ export default function TambahTindakLanjut({ objekPadId }: { objekPadId: string 
         </div>
         <div className="field">
           <label>Pokja</label>
-          <select value={form.pokja} onChange={(e) => setForm({ ...form, pokja: e.target.value })}>
-            <option value="I">Pokja I</option>
-            <option value="II">Pokja II</option>
-            <option value="III">Pokja III</option>
+          <select
+            value={form.pokja}
+            disabled={pokjaOptions.length === 1}
+            onChange={(e) => setForm({ ...form, pokja: e.target.value as "I" | "II" | "III" })}
+          >
+            {pokjaOptions.map((p) => (
+              <option key={p} value={p}>Pokja {p}</option>
+            ))}
           </select>
         </div>
       </div>

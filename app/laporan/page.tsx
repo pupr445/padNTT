@@ -1,4 +1,7 @@
 import { createServerSupabase } from "@/lib/supabase/server";
+import { getCurrentProfile } from "@/lib/auth";
+import { canCreateLaporan } from "@/lib/permissions";
+import { ROLE_LABEL } from "@/lib/types";
 import LaporanForm from "./form";
 import { rupiah } from "@/lib/status";
 
@@ -13,7 +16,12 @@ async function getData() {
 }
 
 export default async function LaporanPage() {
-  const { laporan, jenisPad, targetRealisasi } = await getData();
+  const [{ laporan, jenisPad, targetRealisasi }, profile] = await Promise.all([getData(), getCurrentProfile()]);
+
+  const canCreate = canCreateLaporan(profile?.role);
+  const pokjaOptions: Array<"I" | "II" | "III"> =
+    profile?.role === "pokja1_ketua" ? ["I"] : profile?.role === "pokja2_ketua" ? ["II"] : ["I", "II", "III"];
+  const roleLabel = profile ? ROLE_LABEL[profile.role] : "-";
 
   return (
     <div>
@@ -55,7 +63,12 @@ export default async function LaporanPage() {
       </div>
 
       <div style={{ marginBottom: 22 }}>
-        <LaporanForm />
+        <LaporanForm
+          canCreate={canCreate}
+          pokjaOptions={pokjaOptions}
+          roleLabel={roleLabel}
+          namaDefault={profile?.nama_lengkap ?? ""}
+        />
       </div>
 
       <div className="stack">

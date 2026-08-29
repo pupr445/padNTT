@@ -4,13 +4,32 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-export default function LaporanForm() {
+export default function LaporanForm({
+  canCreate,
+  pokjaOptions,
+  roleLabel,
+  namaDefault,
+}: {
+  canCreate: boolean;
+  pokjaOptions: Array<"I" | "II" | "III">;
+  roleLabel: string;
+  namaDefault: string;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [form, setForm] = useState({ judul: "", periode: "", ringkasan: "", pokja: "III", dibuat_oleh: "" });
+  const [form, setForm] = useState({ judul: "", periode: "", ringkasan: "", pokja: pokjaOptions[0] ?? "III", dibuat_oleh: namaDefault });
   const supabase = createClient();
+
+  if (!canCreate) {
+    return (
+      <p style={{ fontSize: 12.5, color: "var(--text-muted)" }}>
+        Peran Anda ({roleLabel}) hanya bisa melihat laporan berkala. Pembuatan laporan dilakukan oleh
+        Ketua tiap Pokja, Pokja III, atau pimpinan tim.
+      </p>
+    );
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -32,7 +51,7 @@ export default function LaporanForm() {
       setError(insertError.message);
       return;
     }
-    setForm({ judul: "", periode: "", ringkasan: "", pokja: "III", dibuat_oleh: "" });
+    setForm({ judul: "", periode: "", ringkasan: "", pokja: pokjaOptions[0] ?? "III", dibuat_oleh: namaDefault });
     setOpen(false);
     router.refresh();
   }
@@ -64,10 +83,14 @@ export default function LaporanForm() {
       <div className="form-grid-2">
         <div className="field">
           <label>Pokja</label>
-          <select value={form.pokja} onChange={(e) => setForm({ ...form, pokja: e.target.value })}>
-            <option value="I">Pokja I</option>
-            <option value="II">Pokja II</option>
-            <option value="III">Pokja III</option>
+          <select
+            value={form.pokja}
+            disabled={pokjaOptions.length === 1}
+            onChange={(e) => setForm({ ...form, pokja: e.target.value as "I" | "II" | "III" })}
+          >
+            {pokjaOptions.map((p) => (
+              <option key={p} value={p}>Pokja {p}</option>
+            ))}
           </select>
         </div>
         <div className="field">

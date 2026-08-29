@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { createServerSupabase } from "@/lib/supabase/server";
+import { getCurrentProfile } from "@/lib/auth";
+import { canCreateObjekPad } from "@/lib/permissions";
 import ObjekPadForm from "./form";
 import { statusMeta } from "@/lib/status";
 
@@ -20,7 +22,8 @@ async function getData() {
 }
 
 export default async function ObjekPadPage() {
-  const { jenisPad, objekPad, error } = await getData();
+  const [{ jenisPad, objekPad, error }, profile] = await Promise.all([getData(), getCurrentProfile()]);
+  const canCreate = canCreateObjekPad(profile?.role);
 
   return (
     <div>
@@ -43,7 +46,14 @@ export default async function ObjekPadPage() {
       )}
 
       <div style={{ marginBottom: 24 }}>
-        <ObjekPadForm jenisPad={jenisPad} />
+        {canCreate ? (
+          <ObjekPadForm jenisPad={jenisPad} />
+        ) : (
+          <p style={{ fontSize: 12.5, color: "var(--text-muted)" }}>
+            Peran Anda ({profile?.role ?? "-"}) hanya bisa melihat daftar objek PAD. Penambahan/pengubahan
+            data dilakukan oleh Pokja I atau pimpinan tim.
+          </p>
+        )}
       </div>
 
       <div className="stack">
