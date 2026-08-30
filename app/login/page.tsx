@@ -47,12 +47,7 @@ function LoginForm() {
     <div className="login-shell">
       <div className="login-side">
         <div className="login-brand">
-          <div className="brand-mark" style={{ width: 40, height: 40 }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 21s-7-6.3-7-11.5A7 7 0 0 1 19 9.5C19 14.7 12 21 12 21Z" />
-              <circle cx="12" cy="9.5" r="2.2" />
-            </svg>
-          </div>
+          <img src="/brand/logo.png" alt="Logo OPTIMA PAD NTT" className="brand-mark" style={{ width: 40, height: 40, borderRadius: 10 }} />
           <div>
             <div className="brand-name" style={{ fontSize: 19 }}>OPTIMA PAD NTT</div>
             <div className="brand-tag">SK Gubernur 272/KEP/HK/2026</div>
