@@ -66,6 +66,17 @@ export type PadTariff = {
   is_active: boolean;
 };
 
+export type WajibRetribusi = {
+  id: string;
+  nama: string;
+  jenis_wajib: string | null;
+  nik_npwp: string | null;
+  alamat: string | null;
+  kontak: string | null;
+  kabupaten_kota: string | null;
+  created_at: string;
+};
+
 export type ObjekPad = {
   id: string;
   jenis_pad_id: string;

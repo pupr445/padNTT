@@ -9,12 +9,14 @@ import {
   canManagePenetapan,
   canManagePembayaran,
   canManagePotensi,
+  canManageWajibRetribusi,
   tindakLanjutPokjaOptions,
 } from "@/lib/permissions";
 import { ROLE_LABEL } from "@/lib/types";
 import UploadLampiran from "./upload";
 import TambahTindakLanjut from "./tindak-lanjut-form";
 import { PenetapanForm, PembayaranForm, PotensiForm } from "./pad-engine-forms";
+import WajibRetribusiSection from "./wajib-retribusi-section";
 import {
   DeleteLampiranButton,
   DeletePembayaranButton,
@@ -29,7 +31,7 @@ export const revalidate = 0;
 
 async function getData(id: string) {
   const db = await createServerSupabase();
-  const { data: objek } = await db.from("objek_pad").select("*, jenis_pad(nama)").eq("id", id).single();
+  const { data: objek } = await db.from("objek_pad").select("*, jenis_pad(nama), wajib_retribusi(*)").eq("id", id).single();
   const { data: tindakLanjut } = await db
     .from("tindak_lanjut")
     .select("*")
@@ -101,6 +103,7 @@ export default async function ObjekDetailPage({ params }: { params: Promise<{ id
   const canPotensi = canManagePotensi(profile?.role);
   const canPenetapan = canManagePenetapan(profile?.role);
   const canPembayaran = canManagePembayaran(profile?.role);
+  const canWajibRetribusi = canManageWajibRetribusi(profile?.role);
 
   const potensiOptions = potensi.map((p: any) => ({
     id: p.id,
@@ -148,6 +151,8 @@ export default async function ObjekDetailPage({ params }: { params: Promise<{ id
           {lampiran.length === 0 && <p style={{ fontSize: 13, color: "var(--text-muted)", gridColumn: "1 / -1" }}>Belum ada lampiran.</p>}
         </div>
       </div>
+
+      <WajibRetribusiSection objekPadId={objek.id} wajibRetribusi={objek.wajib_retribusi} canManage={canWajibRetribusi} />
 
       <div className="card" style={{ marginBottom: 20 }}>
         <p className="section-label">
@@ -210,6 +215,9 @@ export default async function ObjekDetailPage({ params }: { params: Promise<{ id
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <span className="badge" style={{ background: badge.tint, color: badge.color }}>{badge.label}</span>
+                    <a href={`/api/documents/penetapan/${p.id}`} target="_blank" rel="noreferrer" className="btn btn-ghost" style={{ padding: "3px 8px", fontSize: 11 }}>
+                      Cetak SKRD
+                    </a>
                     {canPenetapan && <DeletePenetapanButton id={p.id} />}
                   </div>
                 </div>
@@ -217,11 +225,14 @@ export default async function ObjekDetailPage({ params }: { params: Promise<{ id
                 {(p.pembayaran_pad ?? []).length > 0 && (
                   <div style={{ marginTop: 8, marginLeft: 4 }}>
                     {p.pembayaran_pad.map((b: any) => (
-                      <div key={b.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 11.5, color: "var(--text-secondary)", padding: "3px 0" }}>
+                      <div key={b.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11.5, color: "var(--text-secondary)", padding: "3px 0" }}>
                         <span>
                           {new Date(b.tanggal_bayar).toLocaleDateString("id-ID")} &middot; {b.metode ?? "-"} &middot; <span className="mono">{rupiah(b.jumlah_dibayar)}</span>
                         </span>
-                        {canPembayaran && <DeletePembayaranButton id={b.id} />}
+                        <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <a href={`/api/documents/pembayaran/${b.id}`} target="_blank" rel="noreferrer" style={{ fontSize: 11 }}>Cetak kwitansi</a>
+                          {canPembayaran && <DeletePembayaranButton id={b.id} />}
+                        </span>
                       </div>
                     ))}
                   </div>

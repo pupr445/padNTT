@@ -29,6 +29,10 @@ export function canCreateObjekPad(role: Role | null | undefined) {
 }
 export const canEditObjekPad = canCreateObjekPad;
 
+// wajib_retribusi -- sama seperti objek_pad: Pokja I + pimpinan + super_admin
+// (RLS sudah ada sejak schema_04, ini cuma menyamakan sisi UI)
+export const canManageWajibRetribusi = canCreateObjekPad;
+
 // delete objek_pad: super_admin saja
 export function canDeleteObjekPad(role: Role | null | undefined) {
   return role === "super_admin";
