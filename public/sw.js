@@ -1,5 +1,5 @@
-const CACHE = "optima-pad-shell-v1";
-const SHELL_ASSETS = ["/manifest.json", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/apple-touch-icon.png"];
+const CACHE = "optima-pad-shell-v2";
+const SHELL_ASSETS = ["/manifest.json", "/favicon.ico", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/apple-touch-icon.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL_ASSETS)));

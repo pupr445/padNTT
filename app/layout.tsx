@@ -12,13 +12,18 @@ export const metadata = {
   description: "Sistem Optimalisasi Pendapatan Asli Daerah -- Tim Terpadu, Dinas PUPR Provinsi NTT",
   manifest: "/manifest.json",
   icons: {
-    icon: "/icons/icon-192.png",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icons/icon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
     apple: "/icons/apple-touch-icon.png",
   },
 };
 
 export const viewport = {
-  themeColor: "#0e6e68",
+  themeColor: "#0D1B2A",
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
