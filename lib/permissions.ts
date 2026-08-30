@@ -109,6 +109,24 @@ export function canDeleteTargetRealisasi(role: Role | null | undefined) {
   return has(role, ["bapenda", ...PIMPINAN]);
 }
 
+// potensi_pad -- Pokja I (yang turun ke lapangan) + pimpinan + super_admin,
+// sama seperti izin objek_pad karena memang satu rangkaian kerja Pokja I.
+export const canManagePotensi = canCreateObjekPad;
+
+// penetapan_pad -- fungsi keuangan resmi: Bapenda + pimpinan + super_admin.
+// Sengaja TIDAK termasuk Pokja I, supaya ada pemisahan antara "yang mendata
+// potensi di lapangan" dan "yang menetapkan tagihan resmi".
+export function canManagePenetapan(role: Role | null | undefined) {
+  return has(role, ["bapenda", ...PIMPINAN]);
+}
+
+// pembayaran_pad -- sama seperti penetapan, pencatatan uang masuk tetap
+// fungsi keuangan (Bapenda), bukan Pokja II meski mereka yang menagih di
+// lapangan (aktivitas penagihan sendiri dicatat lewat tindak_lanjut).
+export function canManagePembayaran(role: Role | null | undefined) {
+  return has(role, ["bapenda", ...PIMPINAN]);
+}
+
 // audit_logs -- baca: pimpinan + Pokja III saja (tugasnya memang monitoring/evaluasi)
 export function canViewAuditLog(role: Role | null | undefined) {
   return has(role, [...PIMPINAN, "pokja3_ketua", "pokja3_anggota"]);

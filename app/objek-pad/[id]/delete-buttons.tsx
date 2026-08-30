@@ -73,3 +73,42 @@ export function DeleteLampiranButton({ id }: { id: string }) {
     />
   );
 }
+
+export function DeletePotensiButton({ id }: { id: string }) {
+  const supabase = createClient();
+  return (
+    <DeleteButton
+      confirmText="Hapus catatan potensi ini? Kalau sudah dipakai sebagai dasar penetapan tagihan, penetapannya TIDAK ikut terhapus."
+      onDelete={async () => {
+        const { error } = await supabase.from("potensi_pad").delete().eq("id", id);
+        return { error: error?.message ?? null };
+      }}
+    />
+  );
+}
+
+export function DeletePenetapanButton({ id }: { id: string }) {
+  const supabase = createClient();
+  return (
+    <DeleteButton
+      confirmText="Hapus penetapan tagihan ini? Semua riwayat pembayaran yang menempel padanya IKUT TERHAPUS. Kalau cuma salah input, pertimbangkan tandai batal lewat SQL Editor daripada hapus."
+      onDelete={async () => {
+        const { error } = await supabase.from("penetapan_pad").delete().eq("id", id);
+        return { error: error?.message ?? null };
+      }}
+    />
+  );
+}
+
+export function DeletePembayaranButton({ id }: { id: string }) {
+  const supabase = createClient();
+  return (
+    <DeleteButton
+      confirmText="Hapus catatan pembayaran ini? Status tagihan akan otomatis dihitung ulang."
+      onDelete={async () => {
+        const { error } = await supabase.from("pembayaran_pad").delete().eq("id", id);
+        return { error: error?.message ?? null };
+      }}
+    />
+  );
+}

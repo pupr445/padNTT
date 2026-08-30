@@ -20,6 +20,10 @@ async function getDashboardData() {
     .select("*")
     .order("created_at", { ascending: false })
     .limit(5);
+  const { data: penetapanAktif } = await db
+    .from("penetapan_pad")
+    .select("jumlah_ditetapkan, jatuh_tempo, status, pembayaran_pad(jumlah_dibayar)")
+    .neq("status", "dibatalkan");
 
   return {
     jenisPad: jenisPad ?? [],
@@ -27,17 +31,25 @@ async function getDashboardData() {
     objekPadAll: objekPadAll ?? [],
     objekPadRecent: objekPadRecent ?? [],
     tindakLanjut: tindakLanjut ?? [],
+    penetapanAktif: penetapanAktif ?? [],
     error: jenisPadError?.message ?? null,
   };
 }
 
 export default async function DashboardPage() {
-  const { jenisPad, targetRealisasi, objekPadAll, objekPadRecent, tindakLanjut, error } = await getDashboardData();
+  const { jenisPad, targetRealisasi, objekPadAll, objekPadRecent, tindakLanjut, penetapanAktif, error } = await getDashboardData();
 
   const totalTarget = targetRealisasi.reduce((sum, r) => sum + Number(r.target_rp), 0);
   const totalRealisasi = targetRealisasi.reduce((sum, r) => sum + Number(r.realisasi_rp), 0);
-  const totalTunggakan = Math.max(totalTarget - totalRealisasi, 0);
   const persenTotal = totalTarget > 0 ? Math.round((totalRealisasi / totalTarget) * 100) : 0;
+
+  // Piutang sesungguhnya: sisa (jumlah ditetapkan - total dibayar) dari
+  // penetapan yang belum lunas -- bukan lagi "target - realisasi" (itu cuma
+  // proksi kekurangan vs target makro, bukan tagihan riil per objek).
+  const totalPiutang = penetapanAktif.reduce((sum: number, p: any) => {
+    const dibayar = (p.pembayaran_pad ?? []).reduce((s: number, b: any) => s + Number(b.jumlah_dibayar), 0);
+    return sum + Math.max(Number(p.jumlah_ditetapkan) - dibayar, 0);
+  }, 0);
 
   const perKabupaten = objekPadAll.reduce((acc: Record<string, number>, o) => {
     const key = o.kabupaten_kota || "Belum diisi";
@@ -83,7 +95,8 @@ export default async function DashboardPage() {
         </div>
         <div className="stat-card">
           <p className="stat-label">Piutang / tunggakan</p>
-          <p className="stat-value mono">{rupiah(totalTunggakan)}</p>
+          <p className="stat-value mono">{rupiah(totalPiutang)}</p>
+          <p className="stat-delta" style={{ color: "var(--text-muted)" }}>dari penetapan belum lunas</p>
         </div>
         <div className="stat-card">
           <p className="stat-label">Objek PAD tercatat</p>

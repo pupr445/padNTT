@@ -111,6 +111,44 @@ export type LaporanBerkala = {
   created_at: string;
 };
 
+export type PotensiPad = {
+  id: string;
+  objek_pad_id: string;
+  tarif_id: string | null;
+  periode_tahun: number;
+  periode_bulan: number | null;
+  parameter_jumlah: number;
+  tarif_rp_saat_itu: number;
+  estimasi_potensi: number;
+  catatan: string | null;
+  created_at: string;
+};
+
+export type PenetapanPad = {
+  id: string;
+  objek_pad_id: string;
+  potensi_pad_id: string | null;
+  nomor_penetapan: string | null;
+  periode_tahun: number;
+  periode_bulan: number | null;
+  jumlah_ditetapkan: number;
+  tanggal_ditetapkan: string;
+  jatuh_tempo: string;
+  status: "belum_lunas" | "sebagian" | "lunas" | "dibatalkan";
+  catatan: string | null;
+  created_at: string;
+};
+
+export type PembayaranPad = {
+  id: string;
+  penetapan_id: string;
+  jumlah_dibayar: number;
+  tanggal_bayar: string;
+  metode: string | null;
+  catatan: string | null;
+  created_at: string;
+};
+
 export type Lampiran = {
   id: string;
   r2_key: string;

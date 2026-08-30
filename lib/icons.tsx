@@ -110,3 +110,12 @@ export function IconHistory({ size = 16 }: IconProps) {
     </svg>
   );
 }
+
+export function IconWallet({ size = 16 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h11A2.5 2.5 0 0 1 19 7.5V9h1.5A1.5 1.5 0 0 1 22 10.5v6a1.5 1.5 0 0 1-1.5 1.5H5.5A2.5 2.5 0 0 1 3 15.5v-8Z" />
+      <circle cx="17" cy="13.5" r="1.2" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
