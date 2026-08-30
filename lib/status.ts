@@ -7,31 +7,35 @@ export type StatusVerifikasi = "belum_terdaftar" | "proses_verifikasi" | "terdaf
 
 export const STATUS_META: Record<
   StatusVerifikasi,
-  { label: string; color: string; tint: string; mapLabel: string }
+  { label: string; color: string; tint: string; mapLabel: string; glyph: string }
 > = {
   belum_terdaftar: {
     label: "Belum terdaftar",
     color: "var(--status-red)",
     tint: "var(--status-red-tint)",
-    mapLabel: "Merah — belum tervalidasi",
+    mapLabel: "Merah bulat kosong — belum tervalidasi",
+    glyph: "\u25CB", // lingkaran kosong
   },
   proses_verifikasi: {
     label: "Proses verifikasi",
     color: "var(--status-yellow)",
     tint: "var(--status-yellow-tint)",
-    mapLabel: "Kuning — sudah didata",
+    mapLabel: "Kuning segitiga — sudah didata",
+    glyph: "\u25B2", // segitiga
   },
   terdaftar: {
     label: "Terdaftar",
     color: "var(--status-blue)",
     tint: "var(--status-blue-tint)",
-    mapLabel: "Biru — sudah tervalidasi",
+    mapLabel: "Biru kotak — sudah tervalidasi",
+    glyph: "\u25A0", // kotak
   },
   menunggak: {
     label: "Menunggak",
     color: "var(--status-black)",
     tint: "var(--status-black-tint)",
-    mapLabel: "Hitam — bermasalah / tunggakan",
+    mapLabel: "Hitam tanda seru — bermasalah / tunggakan",
+    glyph: "!",
   },
 };
 

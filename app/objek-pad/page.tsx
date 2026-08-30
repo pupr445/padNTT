@@ -3,26 +3,42 @@ import { createServerSupabase } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
 import { canCreateObjekPad } from "@/lib/permissions";
 import ObjekPadForm from "./form";
+import ObjekPadFilters from "./filters";
 import { statusMeta } from "@/lib/status";
 
 export const revalidate = 0;
 
-async function getData() {
+async function getData(filters: { jenis?: string; status?: string; kab?: string }) {
   const db = await createServerSupabase();
   const { data: jenisPad, error: jenisPadError } = await db.from("jenis_pad").select("*");
-  const { data: objekPad, error: objekPadError } = await db
-    .from("objek_pad")
-    .select("*, jenis_pad(nama)")
-    .order("created_at", { ascending: false });
+
+  let query = db.from("objek_pad").select("*, jenis_pad(nama)").order("created_at", { ascending: false });
+  if (filters.jenis) query = query.eq("jenis_pad_id", filters.jenis);
+  if (filters.status) query = query.eq("status_verifikasi", filters.status);
+  if (filters.kab) query = query.eq("kabupaten_kota", filters.kab);
+  const { data: objekPad, error: objekPadError } = await query;
+
+  // Daftar kabupaten unik utk dropdown filter -- diambil dari semua objek
+  // (bukan hasil yg sudah difilter), supaya pilihan filter tidak menyusut
+  // sendiri begitu satu filter lain diterapkan.
+  const { data: kabRaw } = await db.from("objek_pad").select("kabupaten_kota").not("kabupaten_kota", "is", null);
+  const kabupatenList = Array.from(new Set((kabRaw ?? []).map((r: any) => r.kabupaten_kota as string))).sort();
+
   return {
     jenisPad: jenisPad ?? [],
     objekPad: objekPad ?? [],
+    kabupatenList,
     error: jenisPadError?.message || objekPadError?.message || null,
   };
 }
 
-export default async function ObjekPadPage() {
-  const [{ jenisPad, objekPad, error }, profile] = await Promise.all([getData(), getCurrentProfile()]);
+export default async function ObjekPadPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ jenis?: string; status?: string; kab?: string }>;
+}) {
+  const filters = await searchParams;
+  const [{ jenisPad, objekPad, kabupatenList, error }, profile] = await Promise.all([getData(filters), getCurrentProfile()]);
   const canCreate = canCreateObjekPad(profile?.role);
 
   return (
@@ -56,6 +72,8 @@ export default async function ObjekPadPage() {
         )}
       </div>
 
+      <ObjekPadFilters jenisPad={jenisPad} kabupatenList={kabupatenList} />
+
       <div className="stack">
         {objekPad.map((o: any) => {
           const meta = statusMeta(o.status_verifikasi);
@@ -78,7 +96,11 @@ export default async function ObjekPadPage() {
           );
         })}
         {objekPad.length === 0 && (
-          <div className="empty-state">Belum ada objek PAD. Tambahkan lewat form di atas.</div>
+          <div className="empty-state">
+            {filters.jenis || filters.status || filters.kab
+              ? "Tidak ada objek PAD yang cocok dengan filter ini."
+              : "Belum ada objek PAD. Tambahkan lewat form di atas."}
+          </div>
         )}
       </div>
     </div>

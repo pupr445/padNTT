@@ -96,11 +96,11 @@ export default async function DashboardPage() {
         <div className="stat-card">
           <p className="stat-label">Piutang / tunggakan</p>
           <p className="stat-value mono">{rupiah(totalPiutang)}</p>
-          <p className="stat-delta" style={{ color: "var(--text-muted)" }}>dari penetapan belum lunas</p>
+          <Link href="/objek-pad?status=menunggak" style={{ fontSize: 12, fontWeight: 600 }}>Lihat objek menunggak &rarr;</Link>
         </div>
         <div className="stat-card">
           <p className="stat-label">Objek PAD tercatat</p>
-          <p className="stat-value">{objekPadAll.length}</p>
+          <Link href="/objek-pad" className="stat-value" style={{ display: "block" }}>{objekPadAll.length}</Link>
           <Link href="/peta" style={{ fontSize: 12, fontWeight: 600 }}>Lihat peta potensi &rarr;</Link>
         </div>
       </div>
@@ -115,7 +115,7 @@ export default async function DashboardPage() {
               const realisasi = rows.reduce((s, r) => s + Number(r.realisasi_rp), 0);
               const persen = target > 0 ? Math.round((realisasi / target) * 100) : 0;
               return (
-                <div key={jp.id}>
+                <Link key={jp.id} href={`/objek-pad?jenis=${jp.id}`} style={{ display: "block" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 6 }}>
                     <span style={{ fontWeight: 500 }}>{jp.nama}</span>
                     <span className="mono" style={{ color: "var(--text-secondary)" }}>{persen}%</span>
@@ -123,7 +123,7 @@ export default async function DashboardPage() {
                   <div className="progress-track">
                     <div className="progress-fill" style={{ width: `${Math.min(persen, 100)}%` }} />
                   </div>
-                </div>
+                </Link>
               );
             })}
             {jenisPad.length === 0 && (
@@ -135,17 +135,27 @@ export default async function DashboardPage() {
         <div className="card">
           <p className="section-label">Objek berdasarkan kabupaten/kota</p>
           <div className="stack">
-            {kabupatenSorted.map(([nama, n]) => (
-              <div key={nama}>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 6 }}>
-                  <span>{nama}</span>
-                  <span className="mono" style={{ color: "var(--text-secondary)" }}>{n}</span>
-                </div>
-                <div className="progress-track">
-                  <div className="progress-fill" style={{ width: `${(n / maxKab) * 100}%`, background: "var(--gold)" }} />
-                </div>
-              </div>
-            ))}
+            {kabupatenSorted.map(([nama, n]) => {
+              const isUnknown = nama === "Belum diisi";
+              const content = (
+                <>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 6 }}>
+                    <span>{nama}</span>
+                    <span className="mono" style={{ color: "var(--text-secondary)" }}>{n}</span>
+                  </div>
+                  <div className="progress-track">
+                    <div className="progress-fill" style={{ width: `${(n / maxKab) * 100}%`, background: "var(--gold)" }} />
+                  </div>
+                </>
+              );
+              return isUnknown ? (
+                <div key={nama}>{content}</div>
+              ) : (
+                <Link key={nama} href={`/objek-pad?kab=${encodeURIComponent(nama)}`} style={{ display: "block" }}>
+                  {content}
+                </Link>
+              );
+            })}
             {kabupatenSorted.length === 0 && <div className="empty-state">Belum ada objek PAD tercatat.</div>}
           </div>
         </div>
@@ -157,11 +167,11 @@ export default async function DashboardPage() {
           {(Object.keys(STATUS_META) as (keyof typeof STATUS_META)[]).map((key) => {
             const meta = STATUS_META[key];
             return (
-              <span key={key} className="badge" style={{ background: meta.tint, color: meta.color }}>
+              <Link key={key} href={`/objek-pad?status=${key}`} className="badge" style={{ background: meta.tint, color: meta.color }}>
                 <span className="status-dot" style={{ background: meta.color }} />
                 {meta.label}
                 <span className="mono" style={{ opacity: 0.75 }}>&middot; {statusCounts[key] || 0}</span>
-              </span>
+              </Link>
             );
           })}
         </div>
