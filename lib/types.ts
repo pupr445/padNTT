@@ -108,6 +108,7 @@ export type TindakLanjut = {
   pokja: string | null;
   pic: string | null;
   tanggal_kegiatan: string;
+  deadline: string | null;
   status: "berjalan" | "selesai" | "tertunda";
 };
 
@@ -157,6 +158,16 @@ export type PembayaranPad = {
   tanggal_bayar: string;
   metode: string | null;
   catatan: string | null;
+  created_at: string;
+};
+
+export type Notification = {
+  id: string;
+  kind: "tindak_lanjut_baru" | "laporan_baru" | "objek_menunggak" | "penetapan_baru";
+  title: string;
+  body: string | null;
+  link: string | null;
+  is_read: boolean;
   created_at: string;
 };
 

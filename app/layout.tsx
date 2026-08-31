@@ -6,6 +6,7 @@ import { IconLogout } from "@/lib/icons";
 import SidebarNav from "./nav-links";
 import OfflineStatusBadge from "./offline-status";
 import ServiceWorkerRegister from "./sw-register";
+import NotificationBell from "./notification-bell";
 
 export const metadata = {
   title: "OPTIMA PAD NTT",
@@ -53,6 +54,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
               <div className="sidebar-footer">
                 <div className="user-card">
+                  <NotificationBell />
                   <div>
                     <p className="user-name">{profile.nama_lengkap}</p>
                     <p className="user-role">

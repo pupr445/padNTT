@@ -4,16 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { queueMutation, isLikelyNetworkError } from "@/lib/offline-queue";
-
-const jenisOptions = [
-  { value: "sosialisasi", label: "Sosialisasi" },
-  { value: "pemeriksaan_lapangan", label: "Pemeriksaan lapangan" },
-  { value: "penertiban", label: "Penertiban" },
-  { value: "tindakan_administratif", label: "Tindakan administratif" },
-  { value: "pendampingan_hukum", label: "Pendampingan hukum" },
-  { value: "penagihan", label: "Penagihan" },
-  { value: "lainnya", label: "Lainnya" },
-];
+import { jenisKegiatanOptions, suggestDeadline, type JenisKegiatan } from "@/lib/workflow-pokja";
 
 export default function TambahTindakLanjut({
   objekPadId,
@@ -31,7 +22,17 @@ export default function TambahTindakLanjut({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [queuedMsg, setQueuedMsg] = useState("");
-  const [form, setForm] = useState({ jenis_kegiatan: "sosialisasi", deskripsi: "", pokja: pokjaOptions[0] ?? "I", pic: "" });
+  const [deadlineTouched, setDeadlineTouched] = useState(false);
+
+  const pokjaAwal = pokjaOptions[0] ?? "I";
+  const jenisAwal = jenisKegiatanOptions(pokjaAwal)[0]?.value ?? "lainnya";
+  const [form, setForm] = useState({
+    jenis_kegiatan: jenisAwal,
+    deskripsi: "",
+    pokja: pokjaAwal,
+    pic: "",
+    deadline: suggestDeadline(jenisAwal),
+  });
   const supabase = createClient();
 
   if (!canCreate) {
@@ -40,6 +41,22 @@ export default function TambahTindakLanjut({
         Peran Anda ({roleLabel}) hanya bisa melihat riwayat tindak lanjut objek ini.
       </p>
     );
+  }
+
+  const opsiKegiatan = jenisKegiatanOptions(form.pokja);
+
+  function handlePokjaChange(pokja: "I" | "II" | "III") {
+    const jenisBaru = jenisKegiatanOptions(pokja)[0]?.value ?? "lainnya";
+    setForm((f) => ({
+      ...f,
+      pokja,
+      jenis_kegiatan: jenisBaru,
+      deadline: deadlineTouched ? f.deadline : suggestDeadline(jenisBaru),
+    }));
+  }
+
+  function handleJenisChange(jenis: JenisKegiatan) {
+    setForm((f) => ({ ...f, jenis_kegiatan: jenis, deadline: deadlineTouched ? f.deadline : suggestDeadline(jenis) }));
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -56,6 +73,7 @@ export default function TambahTindakLanjut({
       deskripsi: form.deskripsi.trim(),
       pokja: form.pokja,
       pic: form.pic.trim() || null,
+      deadline: form.deadline || null,
     };
 
     let queued = false;
@@ -80,7 +98,14 @@ export default function TambahTindakLanjut({
       }
     }
     setSaving(false);
-    setForm({ jenis_kegiatan: "sosialisasi", deskripsi: "", pokja: pokjaOptions[0] ?? "I", pic: "" });
+    setDeadlineTouched(false);
+    setForm({
+      jenis_kegiatan: jenisAwal,
+      deskripsi: "",
+      pokja: pokjaAwal,
+      pic: "",
+      deadline: suggestDeadline(jenisAwal),
+    });
 
     if (queued) {
       setTimeout(() => {
@@ -106,22 +131,22 @@ export default function TambahTindakLanjut({
     <form onSubmit={handleSubmit} className="stack">
       <div className="form-grid-2">
         <div className="field">
-          <label>Jenis kegiatan</label>
-          <select value={form.jenis_kegiatan} onChange={(e) => setForm({ ...form, jenis_kegiatan: e.target.value })}>
-            {jenisOptions.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-        </div>
-        <div className="field">
           <label>Pokja</label>
           <select
             value={form.pokja}
             disabled={pokjaOptions.length === 1}
-            onChange={(e) => setForm({ ...form, pokja: e.target.value as "I" | "II" | "III" })}
+            onChange={(e) => handlePokjaChange(e.target.value as "I" | "II" | "III")}
           >
             {pokjaOptions.map((p) => (
               <option key={p} value={p}>Pokja {p}</option>
+            ))}
+          </select>
+        </div>
+        <div className="field">
+          <label>Jenis kegiatan</label>
+          <select value={form.jenis_kegiatan} onChange={(e) => handleJenisChange(e.target.value as JenisKegiatan)}>
+            {opsiKegiatan.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
             ))}
           </select>
         </div>
@@ -135,9 +160,22 @@ export default function TambahTindakLanjut({
           placeholder="Contoh: Survei lapangan dan verifikasi objek utilitas jalan"
         />
       </div>
-      <div className="field">
-        <label>Penanggung jawab (PIC)</label>
-        <input value={form.pic} onChange={(e) => setForm({ ...form, pic: e.target.value })} placeholder="Nama petugas" />
+      <div className="form-grid-2">
+        <div className="field">
+          <label>Penanggung jawab (PIC)</label>
+          <input value={form.pic} onChange={(e) => setForm({ ...form, pic: e.target.value })} placeholder="Nama petugas" />
+        </div>
+        <div className="field">
+          <label>Deadline (SLA)</label>
+          <input
+            type="date"
+            value={form.deadline}
+            onChange={(e) => {
+              setDeadlineTouched(true);
+              setForm({ ...form, deadline: e.target.value });
+            }}
+          />
+        </div>
       </div>
       {error && <p className="error-text">{error}</p>}
       {queuedMsg && <p style={{ fontSize: 12.5, color: "var(--status-yellow)" }}>{queuedMsg}</p>}

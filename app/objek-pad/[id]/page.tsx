@@ -17,6 +17,8 @@ import UploadLampiran from "./upload";
 import TambahTindakLanjut from "./tindak-lanjut-form";
 import { PenetapanForm, PembayaranForm, PotensiForm } from "./pad-engine-forms";
 import WajibRetribusiSection from "./wajib-retribusi-section";
+import TindakLanjutStatus from "./tindak-lanjut-status";
+import { JENIS_KEGIATAN_LABEL } from "@/lib/workflow-pokja";
 import {
   DeleteLampiranButton,
   DeletePembayaranButton,
@@ -259,17 +261,30 @@ export default async function ObjekDetailPage({ params }: { params: Promise<{ id
           roleLabel={roleLabel}
         />
         <div className="stack" style={{ marginTop: 14 }}>
-          {tindakLanjut.map((t) => (
-            <div key={t.id} style={{ borderTop: "1px solid var(--line)", paddingTop: 10, display: "flex", justifyContent: "space-between", gap: 10 }}>
-              <div>
-                <p style={{ fontSize: 13.5, margin: 0 }}>{t.deskripsi ?? t.jenis_kegiatan}</p>
-                <p className="mono" style={{ fontSize: 11, color: "var(--text-muted)", margin: "6px 0 0" }}>
-                  {t.jenis_kegiatan} &middot; Pokja {t.pokja ?? "-"} &middot; {new Date(t.tanggal_kegiatan).toLocaleDateString("id-ID")}
-                </p>
+          {tindakLanjut.map((t) => {
+            const lewatSla = t.deadline && t.status !== "selesai" && new Date(t.deadline) < new Date();
+            return (
+              <div key={t.id} style={{ borderTop: "1px solid var(--line)", paddingTop: 10, display: "flex", justifyContent: "space-between", gap: 10 }}>
+                <div>
+                  <p style={{ fontSize: 13.5, margin: 0 }}>{t.deskripsi ?? t.jenis_kegiatan}</p>
+                  <p className="mono" style={{ fontSize: 11, color: "var(--text-muted)", margin: "6px 0 0" }}>
+                    {JENIS_KEGIATAN_LABEL[t.jenis_kegiatan] ?? t.jenis_kegiatan} &middot; Pokja {t.pokja ?? "-"} &middot;{" "}
+                    {new Date(t.tanggal_kegiatan).toLocaleDateString("id-ID")}
+                    {t.deadline && (
+                      <>
+                        {" "}&middot; tenggat {new Date(t.deadline).toLocaleDateString("id-ID")}
+                        {lewatSla && <span style={{ color: "var(--status-red)" }}> (lewat SLA)</span>}
+                      </>
+                    )}
+                  </p>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <TindakLanjutStatus id={t.id} status={t.status} canChange={canDeleteTindakLanjut(profile?.role, t.pokja, profile?.pokja)} />
+                  {canDeleteTindakLanjut(profile?.role, t.pokja, profile?.pokja) && <DeleteTindakLanjutButton id={t.id} />}
+                </div>
               </div>
-              {canDeleteTindakLanjut(profile?.role, t.pokja, profile?.pokja) && <DeleteTindakLanjutButton id={t.id} />}
-            </div>
-          ))}
+            );
+          })}
           {tindakLanjut.length === 0 && <p style={{ fontSize: 13, color: "var(--text-muted)" }}>Belum ada tindak lanjut.</p>}
         </div>
       </div>
